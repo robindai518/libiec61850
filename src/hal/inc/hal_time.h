@@ -50,6 +50,10 @@ extern "C" {
  */
 uint64_t Hal_getTimeInMs(void);
 
+uint64_t Hal_getTimeInUs(void);
+
+uint64_t Hal_getTimeInNs(void);
+
 /*! @} */
 
 /*! @} */

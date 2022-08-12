@@ -61,6 +61,7 @@ struct sGoosePublisher {
     bool simulation;
 
     MmsValue* timestamp; /* time when stNum is increased */
+    int64_t swTimestamp;   //内核软时间戳，纳秒
 };
 
 
@@ -71,7 +72,7 @@ GoosePublisher_create(CommParameters* parameters, const char* interfaceID)
 
     prepareGooseBuffer(self, parameters, interfaceID);
 
-    self->timestamp = MmsValue_newUtcTimeByMsTime(Hal_getTimeInMs());
+    self->timestamp = MmsValue_newUtcTimeByNsTime(Hal_getTimeInNs());
 
     GoosePublisher_reset(self);
 
@@ -137,9 +138,9 @@ GoosePublisher_setNeedsCommission(GoosePublisher self, bool ndsCom)
 uint64_t
 GoosePublisher_increaseStNum(GoosePublisher self)
 {
-    uint64_t currentTime = Hal_getTimeInMs();
+    uint64_t currentTime = Hal_getTimeInNs();
 
-    MmsValue_setUtcTimeMs(self->timestamp, currentTime);
+    MmsValue_setUtcTimeNs(self->timestamp, currentTime);
 
     self->stNum++;
     self->sqNum = 0;
@@ -361,6 +362,8 @@ GoosePublisher_publish(GoosePublisher self, LinkedList dataSet)
 
     int32_t payloadLength = createGoosePayload(self, dataSet, buffer, maxPayloadSize);
 
+    int64_t *t = self->sqNum == 0 ? &self->swTimestamp : 0;
+
     self->sqNum++;
 
     if (payloadLength == -1)
@@ -376,7 +379,37 @@ GoosePublisher_publish(GoosePublisher self, LinkedList dataSet)
     if (DEBUG_GOOSE_PUBLISHER)
         printf("GOOSE_PUBLISHER: send GOOSE message\n");
 
-    Ethernet_sendPacket(self->ethernetSocket, self->buffer, self->payloadStart + payloadLength);
+    Ethernet_sendPacket(self->ethernetSocket, self->buffer, self->payloadStart + payloadLength, t);
 
     return 0;
+}
+
+int
+GoosePublisher_socketDescriptor(GoosePublisher self)
+{
+    return Ethernet_socketDescriptor(self->ethernetSocket);
+}
+
+uint32_t
+GoosePublisher_stNum(GoosePublisher self)
+{
+    return self->stNum;
+}
+
+uint32_t
+GoosePublisher_sqNum(GoosePublisher self)
+{
+    return self->sqNum;
+}
+
+int64_t
+GoosePublisher_timestamp(GoosePublisher self)
+{
+    return MmsValue_getUtcTimeInNs(self->timestamp);
+}
+
+int64_t
+GoosePublisher_swTimestamp(GoosePublisher self)
+{
+    return self->swTimestamp;
 }

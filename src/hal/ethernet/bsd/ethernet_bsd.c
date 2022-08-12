@@ -363,8 +363,9 @@ Ethernet_setProtocolFilter(EthernetSocket self, uint16_t etherType)
 }
 
 int
-Ethernet_receivePacket(EthernetSocket self, uint8_t* buffer, int bufferSize)
+Ethernet_receivePacket(EthernetSocket self, uint8_t* buffer, int bufferSize, int64_t *t)
 {
+    if (t) *t = 0;
     // If the actual buffer is empty, make a read call to the BSP device in order to get new data.
     if (self->bpfEnd - self->bpfPositon < 4)
     {
@@ -410,8 +411,9 @@ Ethernet_receivePacket(EthernetSocket self, uint8_t* buffer, int bufferSize)
 }
 
 void
-Ethernet_sendPacket(EthernetSocket self, uint8_t* buffer, int packetSize)
+Ethernet_sendPacket(EthernetSocket self, uint8_t* buffer, int packetSize, int64_t *t)
 {
+    if (t) *t = 0;
     // Just send the packet as it is.
     write(self->bpf, buffer, packetSize);
 }
@@ -434,3 +436,10 @@ Ethernet_isSupported()
     return true;
 }
 
+int
+Ethernet_socketDescriptor(EthernetSocket ethSocket)
+{
+    if (ethSocket)
+        return ethSocket->bpf;
+    return -1;
+}

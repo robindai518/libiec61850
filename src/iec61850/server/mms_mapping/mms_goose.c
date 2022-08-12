@@ -130,6 +130,12 @@ MmsGooseControlBlock_getDataSet(MmsGooseControlBlock self)
     return self->dataSet;
 }
 
+GoosePublisher
+MmsGooseControlBlock_goosePublisher(MmsGooseControlBlock self)
+{
+    return self->publisher;
+}
+
 char*
 MmsGooseControlBlock_getLogicalNodeName(MmsGooseControlBlock self)
 {

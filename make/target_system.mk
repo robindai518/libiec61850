@@ -163,8 +163,8 @@ endif
 LIB_NAME = $(LIB_OBJS_DIR)/libiec61850.a
 
 ifeq ($(TARGET), BSD)
-CFLAGS += -arch i386
-LDFLAGS += -arch i386
+CFLAGS += -O2 -arch x86_64 -mmacosx-version-min=10.5
+LDFLAGS += -arch x86_64 -mmacosx-version-min=10.5
 endif
 
 ifeq ($(TARGET), WIN32)

@@ -30,6 +30,9 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include <linux/net_tstamp.h>
+#include <linux/sockios.h>
+
 #include <string.h>
 
 #include "libiec61850_platform_includes.h"
@@ -168,13 +171,14 @@ Ethernet_getInterfaceMACAddress(const char* interfaceId, uint8_t* addr)
     }
 }
 
-
 EthernetSocket
 Ethernet_createSocket(const char* interfaceId, uint8_t* destAddress)
 {
     EthernetSocket ethernetSocket = GLOBAL_CALLOC(1, sizeof(struct sEthernetSocket));
 
-    ethernetSocket->rawSocket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+    //以太帧目前应该无0xffff协议类型，意味着初始不收包，象goose_publisher只发包，无需收包。
+    ethernetSocket->rawSocket = socket(AF_PACKET, SOCK_RAW, htons(0xffff));
+    //ethernetSocket->rawSocket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 
     if (ethernetSocket->rawSocket == -1) {
         printf("Error creating raw socket!\n");
@@ -199,6 +203,11 @@ Ethernet_createSocket(const char* interfaceId, uint8_t* destAddress)
 
     ethernetSocket->isBind = false;
 
+    int val =  destAddress ? SOF_TIMESTAMPING_TX_SOFTWARE | SOF_TIMESTAMPING_SOFTWARE :
+                             SOF_TIMESTAMPING_RX_SOFTWARE | SOF_TIMESTAMPING_SOFTWARE;
+    if (setsockopt(ethernetSocket->rawSocket, SOL_SOCKET, SO_TIMESTAMPING, &val, sizeof(int)) < 0)
+        printf("Error setsockopt SO_TIMESTAMPING!\n");
+
     return ethernetSocket;
 }
 
@@ -206,28 +215,105 @@ void
 Ethernet_setProtocolFilter(EthernetSocket ethSocket, uint16_t etherType)
 {
     ethSocket->socketAddress.sll_protocol = htons(etherType);
+
+    if (ethSocket->isBind == false) {
+        if (bind(ethSocket->rawSocket, (struct sockaddr*) &ethSocket->socketAddress, sizeof(ethSocket->socketAddress)) == 0)
+            ethSocket->isBind = true;
+        else {
+            printf("Error bind raw socket!\n");
+        }
+    }
 }
 
 
 /* non-blocking receive */
 int
-Ethernet_receivePacket(EthernetSocket self, uint8_t* buffer, int bufferSize)
+Ethernet_receivePacket(EthernetSocket self, uint8_t* buffer, int bufferSize, int64_t *t)
 {
+    /* 在这里绑定, 函数被执行到前会收到些无用的包, 如telnet包, 虽然也无大碍
     if (self->isBind == false) {
         if (bind(self->rawSocket, (struct sockaddr*) &self->socketAddress, sizeof(self->socketAddress)) == 0)
             self->isBind = true;
         else
             return 0;
     }
+    */
 
-    return recvfrom(self->rawSocket, buffer, bufferSize, MSG_DONTWAIT, 0, 0);
+    struct iovec entry;
+    entry.iov_base = buffer;
+    entry.iov_len = bufferSize;
+
+    struct {
+        struct cmsghdr cm;
+        char control[512];
+    } control;
+    memset(&control, 0, sizeof(control));
+
+    struct msghdr msg;
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_iov = &entry;
+    msg.msg_iovlen = 1;
+    msg.msg_control = &control;
+    msg.msg_controllen = sizeof(control);
+
+    int ret = recvmsg(self->rawSocket, &msg, MSG_DONTWAIT);
+
+    if (ret > 0) {
+        struct cmsghdr *cmsg;
+        for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+            if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SO_TIMESTAMPING) {
+                struct timespec *stamp = (struct timespec *) CMSG_DATA(cmsg);
+                if (t) *t = stamp->tv_sec * 1000000000LL + stamp->tv_nsec;
+                //printf("---- rx SW ---- %ld.%09ld\n", (long) stamp->tv_sec, (long) stamp->tv_nsec);
+                break;
+            }
+        }
+    }
+
+    return ret;
+    //return recvfrom(self->rawSocket, buffer, bufferSize, MSG_DONTWAIT, 0, 0);
 }
 
 void
-Ethernet_sendPacket(EthernetSocket ethSocket, uint8_t* buffer, int packetSize)
+Ethernet_sendPacket(EthernetSocket ethSocket, uint8_t* buffer, int packetSize, int64_t *t)
 {
+    char buf[1518];
+    while (recvfrom(ethSocket->rawSocket, buf, sizeof(buf), MSG_DONTWAIT, 0, 0) > 0);
+
     sendto(ethSocket->rawSocket, buffer, packetSize,
                 0, (struct sockaddr*) &(ethSocket->socketAddress), sizeof(ethSocket->socketAddress));
+
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(ethSocket->rawSocket, &readfds);
+    struct timeval tv = {5,0};
+
+    if (select(ethSocket->rawSocket + 1, &readfds, NULL, NULL, &tv) > 0) {
+        struct {
+            struct cmsghdr cm;
+            char control[512];
+        } control;
+        memset(&control, 0, sizeof(control));
+
+        struct msghdr msg;
+        memset(&msg, 0, sizeof(msg));
+        msg.msg_control = &control;
+        msg.msg_controllen = sizeof(control);
+
+        int ret = recvmsg(ethSocket->rawSocket, &msg, MSG_ERRQUEUE | MSG_DONTWAIT);
+
+        if (ret >= 0) {
+            struct cmsghdr *cmsg;
+            for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+                if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SO_TIMESTAMPING) {
+                    struct timespec *stamp = (struct timespec *) CMSG_DATA(cmsg);
+                    if (t) *t = stamp->tv_sec * 1000000000LL + stamp->tv_nsec;
+                    //printf("==== tx SW ==== %ld.%09ld\n", (long) stamp->tv_sec, (long) stamp->tv_nsec);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void
@@ -243,3 +329,10 @@ Ethernet_isSupported()
     return true;
 }
 
+int
+Ethernet_socketDescriptor(EthernetSocket ethSocket)
+{
+    if (ethSocket)
+        return ethSocket->rawSocket;
+    return -1;
+}

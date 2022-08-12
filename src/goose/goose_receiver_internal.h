@@ -55,6 +55,8 @@ struct sGooseSubscriber {
 
     GooseListener listener;
     void* listenerParameter;
+
+    int64_t swTimestamp;
 };
 
 

@@ -139,6 +139,11 @@ GooseSubscriber_getDataSetValues(GooseSubscriber self)
     return self->dataSetValues;
 }
 
+int64_t
+GooseSubscriber_swTimestamp(GooseSubscriber self)
+{
+    return self->swTimestamp;
+}
 
 
 

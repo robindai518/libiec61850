@@ -56,6 +56,7 @@ struct sGooseReceiver
 #if (CONFIG_MMS_THREADLESS_STACK == 0)
     Thread thread;
 #endif
+    int64_t swTimestamp;   //内核软时间戳，纳秒
 };
 
 GooseReceiver
@@ -675,6 +676,8 @@ parseGoosePayload(GooseReceiver self, uint8_t* buffer, int apduLength)
 
             matchingSubscriber->invalidityTime = Hal_getTimeInMs() + timeAllowedToLive;
 
+            matchingSubscriber->swTimestamp = self->swTimestamp;
+
             if (matchingSubscriber->listener != NULL)
                 matchingSubscriber->listener(matchingSubscriber, matchingSubscriber->listenerParameter);
 
@@ -881,7 +884,7 @@ GooseReceiver_stopThreadless(GooseReceiver self)
 bool
 GooseReceiver_tick(GooseReceiver self)
 {
-    int packetSize = Ethernet_receivePacket(self->ethSocket, self->buffer, ETH_BUFFER_LENGTH);
+    int packetSize = Ethernet_receivePacket(self->ethSocket, self->buffer, ETH_BUFFER_LENGTH, &self->swTimestamp);
 
     if (packetSize > 0) {
         parseGooseMessage(self, packetSize);
@@ -889,4 +892,10 @@ GooseReceiver_tick(GooseReceiver self)
     }
     else
         return false;
+}
+
+int
+GooseReceiver_socketDescriptor(GooseReceiver self)
+{
+    return Ethernet_socketDescriptor(self->ethSocket);
 }

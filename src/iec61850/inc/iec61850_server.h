@@ -40,6 +40,7 @@ extern "C" {
 #include "iec61850_model.h"
 #include "hal_filesystem.h"
 #include "iec61850_config_file_parser.h"
+#include "goose_publisher.h"
 
 /**
  * An opaque handle for an IED server instance
@@ -242,6 +243,9 @@ IedServer_enableGoosePublishing(IedServer self);
  */
 void
 IedServer_disableGoosePublishing(IedServer self);
+
+GoosePublisher
+IedServer_goosePublisher(IedServer self, const char *name);
 
 /**
  * \brief Set the Ethernet interface to be used by GOOSE publishing

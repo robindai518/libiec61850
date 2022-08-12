@@ -143,6 +143,9 @@ GooseReceiver_stopThreadless(GooseReceiver self);
 bool
 GooseReceiver_tick(GooseReceiver self);
 
+int
+GooseReceiver_socketDescriptor(GooseReceiver self);
+
 /**@}*/
 
 #ifdef __cplusplus

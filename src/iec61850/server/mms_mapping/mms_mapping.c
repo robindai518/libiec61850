@@ -2794,6 +2794,19 @@ MmsMapping_enableGoosePublishing(MmsMapping* self)
 
 }
 
+GoosePublisher
+MmsMapping_goosePublisher(MmsMapping* self, const char *name)
+{
+    LinkedList element = self->gseControls;
+
+    while ((element = LinkedList_getNext(element)) != NULL) {
+        MmsGooseControlBlock gcb = (MmsGooseControlBlock) element->data;
+        if (strcmp(name, MmsGooseControlBlock_getName(gcb)) == 0)
+            return MmsGooseControlBlock_goosePublisher(gcb);
+    }
+    return 0;
+}
+
 void
 MmsMapping_disableGoosePublishing(MmsMapping* self)
 {

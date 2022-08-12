@@ -1234,6 +1234,12 @@ IedServer_disableGoosePublishing(IedServer self)
 #endif /* (CONFIG_INCLUDE_GOOSE_SUPPORT == 1) */
 }
 
+GoosePublisher
+IedServer_goosePublisher(IedServer self, const char *name)
+{
+    return MmsMapping_goosePublisher(self->mmsMapping, name);
+}
+
 void
 IedServer_setWriteAccessPolicy(IedServer self, FunctionalConstraint fc, AccessPolicy policy)
 {

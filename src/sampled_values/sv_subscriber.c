@@ -542,7 +542,7 @@ parseSVMessage(SVReceiver self, int numbytes)
 bool
 SVReceiver_tick(SVReceiver self)
 {
-    int packetSize = Ethernet_receivePacket(self->ethSocket, self->buffer, ETH_BUFFER_LENGTH);
+    int packetSize = Ethernet_receivePacket(self->ethSocket, self->buffer, ETH_BUFFER_LENGTH, 0);
 
     if (packetSize > 0) {
         parseSVMessage(self, packetSize);

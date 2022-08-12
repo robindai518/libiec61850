@@ -53,6 +53,9 @@ MmsGooseControlBlock_getVariableSpecification(MmsGooseControlBlock self);
 DataSet*
 MmsGooseControlBlock_getDataSet(MmsGooseControlBlock self);
 
+GoosePublisher
+MmsGooseControlBlock_goosePublisher(MmsGooseControlBlock self);
+
 bool
 MmsGooseControlBlock_isEnabled(MmsGooseControlBlock self);
 

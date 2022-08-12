@@ -27,6 +27,7 @@
 #include "iec61850_model.h"
 #include "mms_device_model.h"
 #include "control.h"
+#include "goose_publisher.h"
 
 typedef enum {
     REPORT_CONTROL_NONE,
@@ -100,6 +101,9 @@ MmsMapping_triggerGooseObservers(MmsMapping* self, MmsValue* value);
 
 void
 MmsMapping_enableGoosePublishing(MmsMapping* self);
+
+GoosePublisher
+MmsMapping_goosePublisher(MmsMapping* self, const char *name);
 
 void
 MmsMapping_disableGoosePublishing(MmsMapping* self);

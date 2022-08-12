@@ -81,6 +81,21 @@ GoosePublisher_increaseStNum(GoosePublisher self);
 void
 GoosePublisher_reset(GoosePublisher self);
 
+int
+GoosePublisher_socketDescriptor(GoosePublisher self);
+
+uint32_t
+GoosePublisher_stNum(GoosePublisher self);
+
+uint32_t
+GoosePublisher_sqNum(GoosePublisher self);
+
+int64_t
+GoosePublisher_timestamp(GoosePublisher self);
+
+int64_t
+GoosePublisher_swTimestamp(GoosePublisher self);
+
 #ifdef __cplusplus
 }
 #endif

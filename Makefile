@@ -19,6 +19,8 @@ LIB_SOURCE_DIRS += src/mms/iso_mms/asn1c
 LIB_SOURCE_DIRS += src/mms/iso_server
 
 LIB_SOURCE_DIRS += src/logging
+LIB_SOURCE_DIRS += src/logging/drivers/sqlite
+LIB_SOURCE_DIRS += third_party/sqlite
 
 ifndef EXCLUDE_ETHERNET_WINDOWS
 LIB_SOURCE_DIRS += src/goose
@@ -65,6 +67,8 @@ ifeq ($(HAL_IMPL), WIN32)
 LIB_INCLUDE_DIRS += third_party/winpcap/Include
 endif
 
+LIB_INCLUDE_DIRS += third_party/sqlite
+
 ifdef WITH_MBEDTLS
 LIB_SOURCE_DIRS += third_party/mbedtls/mbedtls-2.6.0/library
 LIB_SOURCE_DIRS += src/tls/mbedtls
@@ -83,6 +87,7 @@ endif
 LIB_API_HEADER_FILES = src/hal/inc/hal_time.h 
 LIB_API_HEADER_FILES += src/hal/inc/hal_thread.h
 LIB_API_HEADER_FILES += src/hal/inc/hal_filesystem.h 
+LIB_API_HEADER_FILES += src/hal/inc/hal_ethernet.h
 LIB_API_HEADER_FILES += src/common/inc/libiec61850_common_api.h
 LIB_API_HEADER_FILES += src/common/inc/linked_list.h
 LIB_API_HEADER_FILES += src/common/inc/byte_buffer.h
@@ -170,9 +175,9 @@ $(LIB_OBJS_DIR)/%.o: %.c config
 	$(CC) $(CFLAGS) -c $(LIB_INCLUDES) $(OUTPUT_OPTION) $<
 	
 install:	$(LIB_NAME)
-	mkdir -p $(INSTALL_PREFIX)/include
+	mkdir -p $(INSTALL_PREFIX)/include/61850
 	mkdir -p $(INSTALL_PREFIX)/lib
-	cp $(LIB_API_HEADER_FILES) $(INSTALL_PREFIX)/include
+	cp $(LIB_API_HEADER_FILES) $(INSTALL_PREFIX)/include/61850
 	cp $(LIB_NAME) $(INSTALL_PREFIX)/lib
 
 clean:

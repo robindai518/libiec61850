@@ -443,6 +443,12 @@ MmsValue_setUtcTime(MmsValue* self, uint32_t timeval);
 MmsValue*
 MmsValue_setUtcTimeMs(MmsValue* self, uint64_t timeval);
 
+MmsValue*
+MmsValue_setUtcTimeUs(MmsValue* self, uint64_t timeval);
+
+MmsValue*
+MmsValue_setUtcTimeNs(MmsValue* self, uint64_t timeval);
+
 /**
  * \brief Update an MmsValue object of type MMS_UTCTIME with a buffer containing a BER encoded UTCTime.
  *
@@ -486,6 +492,12 @@ MmsValue_getUtcTimeInMs(const MmsValue* value);
  */
 uint64_t
 MmsValue_getUtcTimeInMsWithUs(const MmsValue* self, uint32_t* usec);
+
+uint64_t
+MmsValue_getUtcTimeInUs(const MmsValue* self);
+
+uint64_t
+MmsValue_getUtcTimeInNs(const MmsValue* self);
 
 /**
  * \brief set the TimeQuality byte of the UtcTime
@@ -884,6 +896,11 @@ MmsValue_newUtcTime(uint32_t timeval);
 MmsValue*
 MmsValue_newUtcTimeByMsTime(uint64_t timeval);
 
+MmsValue*
+MmsValue_newUtcTimeByUsTime(uint64_t timeval);
+
+MmsValue*
+MmsValue_newUtcTimeByNsTime(uint64_t timeval);
 
 void
 MmsValue_setDeletable(MmsValue* self);

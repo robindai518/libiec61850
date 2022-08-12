@@ -479,7 +479,7 @@ SVPublisher_publish(SVPublisher self)
     if (DEBUG_SV_PUBLISHER)
         printf("SV_PUBLISHER: send SV message\n");
 
-    Ethernet_sendPacket(self->ethernetSocket, self->buffer, self->payloadStart + self->payloadLength);
+    Ethernet_sendPacket(self->ethernetSocket, self->buffer, self->payloadStart + self->payloadLength, 0);
 }
 
 

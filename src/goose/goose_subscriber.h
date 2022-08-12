@@ -202,6 +202,8 @@ GooseSubscriber_getTimestamp(GooseSubscriber self);
 MmsValue*
 GooseSubscriber_getDataSetValues(GooseSubscriber self);
 
+int64_t
+GooseSubscriber_swTimestamp(GooseSubscriber self);
 #ifdef __cplusplus
 }
 #endif

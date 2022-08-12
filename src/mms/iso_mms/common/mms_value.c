@@ -734,6 +734,62 @@ MmsValue_setUtcTimeMs(MmsValue* self, uint64_t timeval)
     return self;
 }
 
+MmsValue*
+MmsValue_setUtcTimeUs(MmsValue* self, uint64_t timeval)
+{
+    uint32_t timeval32 = (timeval / 1000000LL);
+
+    uint8_t* timeArray = (uint8_t*) &timeval32;
+    uint8_t* valueArray = self->value.utcTime;
+
+#if (ORDER_LITTLE_ENDIAN == 1)
+    memcpyReverseByteOrder(valueArray, timeArray, 4);
+#else
+    memcpy(valueArray, timeArray, 4);
+#endif
+
+    uint64_t remainder = (timeval % 1000000LL);
+    uint64_t fractionOfSecond = (remainder << 24) / 1000000LL;
+
+    /* encode fraction of second */
+    valueArray[4] = ((fractionOfSecond >> 16) & 0xff);
+    valueArray[5] = ((fractionOfSecond >> 8) & 0xff);
+    valueArray[6] = (fractionOfSecond & 0xff);
+
+    /* encode time quality */
+    valueArray[7] = 0x0a; /* 10 bit sub-second time accuracy */
+
+    return self;
+}
+
+MmsValue*
+MmsValue_setUtcTimeNs(MmsValue* self, uint64_t timeval)
+{
+    uint32_t timeval32 = (timeval / 1000000000LL);
+
+    uint8_t* timeArray = (uint8_t*) &timeval32;
+    uint8_t* valueArray = self->value.utcTime;
+
+#if (ORDER_LITTLE_ENDIAN == 1)
+    memcpyReverseByteOrder(valueArray, timeArray, 4);
+#else
+    memcpy(valueArray, timeArray, 4);
+#endif
+
+    uint64_t remainder = (timeval % 1000000000LL);
+    uint64_t fractionOfSecond = (remainder << 24) / 1000000000LL;
+
+    /* encode fraction of second */
+    valueArray[4] = ((fractionOfSecond >> 16) & 0xff);
+    valueArray[5] = ((fractionOfSecond >> 8) & 0xff);
+    valueArray[6] = (fractionOfSecond & 0xff);
+
+    /* encode time quality */
+    valueArray[7] = 0x0a; /* 10 bit sub-second time accuracy */
+
+    return self;
+}
+
 void
 MmsValue_setUtcTimeQuality(MmsValue* self, uint8_t timeQuality)
 {
@@ -814,6 +870,52 @@ MmsValue_getUtcTimeInMsWithUs(const MmsValue* self, uint32_t* usec)
         *usec = remainder % 1000LL;
 
     return msVal;
+}
+
+uint64_t
+MmsValue_getUtcTimeInUs(const MmsValue* self)
+{
+    uint32_t timeval32;
+    const uint8_t* valueArray = self->value.utcTime;
+
+#if (ORDER_LITTLE_ENDIAN == 1)
+    memcpyReverseByteOrder((uint8_t*) &timeval32, valueArray, 4);
+#else
+    memcpy((uint8_t*)&timeval32, valueArray, 4);
+#endif
+
+    uint64_t fractionOfSecond = 0;
+
+    fractionOfSecond = (valueArray[4] << 16);
+    fractionOfSecond += (valueArray[5] << 8);
+    fractionOfSecond += (valueArray[6]);
+
+    uint64_t remainder = (fractionOfSecond * 1000000ULL) >> 24;
+
+    return timeval32 * 1000000ULL + remainder;
+}
+
+uint64_t
+MmsValue_getUtcTimeInNs(const MmsValue* self)
+{
+    uint32_t timeval32;
+    const uint8_t* valueArray = self->value.utcTime;
+
+#if (ORDER_LITTLE_ENDIAN == 1)
+    memcpyReverseByteOrder((uint8_t*) &timeval32, valueArray, 4);
+#else
+    memcpy((uint8_t*)&timeval32, valueArray, 4);
+#endif
+
+    uint64_t fractionOfSecond = 0;
+
+    fractionOfSecond = (valueArray[4] << 16);
+    fractionOfSecond += (valueArray[5] << 8);
+    fractionOfSecond += (valueArray[6]);
+
+    uint64_t remainder = (fractionOfSecond * 1000000000ULL) >> 24;
+
+    return timeval32 * 1000000000ULL + remainder;
 }
 
 MmsValue*
@@ -1824,6 +1926,34 @@ MmsValue_newUtcTimeByMsTime(uint64_t timeval)
 
     self->type = MMS_UTC_TIME;
     MmsValue_setUtcTimeMs(self, timeval);
+
+    return self;
+}
+
+MmsValue*
+MmsValue_newUtcTimeByUsTime(uint64_t timeval)
+{
+    MmsValue* self = (MmsValue*) GLOBAL_CALLOC(1, sizeof(MmsValue));
+
+    if (self == NULL)
+        return NULL;
+
+    self->type = MMS_UTC_TIME;
+    MmsValue_setUtcTimeUs(self, timeval);
+
+    return self;
+}
+
+MmsValue*
+MmsValue_newUtcTimeByNsTime(uint64_t timeval)
+{
+    MmsValue* self = (MmsValue*) GLOBAL_CALLOC(1, sizeof(MmsValue));
+
+    if (self == NULL)
+        return NULL;
+
+    self->type = MMS_UTC_TIME;
+    MmsValue_setUtcTimeNs(self, timeval);
 
     return self;
 }

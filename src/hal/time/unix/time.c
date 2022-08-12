@@ -52,5 +52,25 @@ Hal_getTimeInMs()
     return ((uint64_t) now.tv_sec * 1000LL) + (now.tv_usec / 1000);
 }
 
+uint64_t
+Hal_getTimeInUs()
+{
+    struct timeval now;
+
+    gettimeofday(&now, NULL);
+
+    return ((uint64_t) now.tv_sec * 1000000LL) + now.tv_usec;
+}
+
+uint64_t
+Hal_getTimeInNs()
+{
+    struct timespec now;
+
+    clock_gettime(CLOCK_REALTIME, &now);
+
+    return ((uint64_t) now.tv_sec * 1000000000LL) + now.tv_nsec;
+}
+
 #endif
 

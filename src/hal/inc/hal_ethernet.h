@@ -130,7 +130,7 @@ void
 Ethernet_destroySocket(EthernetSocket ethSocket);
 
 void
-Ethernet_sendPacket(EthernetSocket ethSocket, uint8_t* buffer, int packetSize);
+Ethernet_sendPacket(EthernetSocket ethSocket, uint8_t* buffer, int packetSize, int64_t *t);
 
 /*
  * \brief set a protocol filter for the specified etherType
@@ -151,7 +151,7 @@ Ethernet_setProtocolFilter(EthernetSocket ethSocket, uint16_t etherType);
  * \return size of message received in bytes
  */
 int
-Ethernet_receivePacket(EthernetSocket ethSocket, uint8_t* buffer, int bufferSize);
+Ethernet_receivePacket(EthernetSocket ethSocket, uint8_t* buffer, int bufferSize, int64_t *t);
 
 /**
  * \brief Indicates if runtime provides support for direct Ethernet access
@@ -160,6 +160,9 @@ Ethernet_receivePacket(EthernetSocket ethSocket, uint8_t* buffer, int bufferSize
  */
 bool
 Ethernet_isSupported(void);
+
+int
+Ethernet_socketDescriptor(EthernetSocket ethSocket);
 
 /*! @} */
 
