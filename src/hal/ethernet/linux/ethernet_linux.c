@@ -286,7 +286,7 @@ Ethernet_sendPacket(EthernetSocket ethSocket, uint8_t* buffer, int packetSize, i
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(ethSocket->rawSocket, &readfds);
-    struct timeval tv = {5,0};
+    struct timeval tv = {0, 500000};
 
     if (select(ethSocket->rawSocket + 1, &readfds, NULL, NULL, &tv) > 0) {
         struct {
