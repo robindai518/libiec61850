@@ -126,7 +126,10 @@ parseUserInformation(AcseConnection* self, uint8_t* buffer, int bufPos, int maxB
 
         bufPos = BerDecoder_decodeLength(buffer, &len, bufPos, maxBufPos);
 
-        if (bufPos < 0) {
+        if (len == 0)
+            continue;
+
+        if ((bufPos < 0) || (bufPos + len > maxBufPos)) {
             *userInfoValid = false;
             return -1;
         }
@@ -186,8 +189,15 @@ parseAarePdu(AcseConnection* self, uint8_t* buffer, int bufPos, int maxBufPos)
         int len;
 
         bufPos = BerDecoder_decodeLength(buffer, &len, bufPos, maxBufPos);
-        if (bufPos < 0)
+
+        if (len == 0)
+            continue;
+
+        if ((bufPos < 0) || (bufPos + len > maxBufPos)) {
+            if (DEBUG_ACSE)
+                printf("ACSE: Invalid PDU!\n");
             return ACSE_ERROR;
+        }
 
         switch (tag)
         {
