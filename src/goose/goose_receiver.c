@@ -662,10 +662,12 @@ parseGoosePayload(GooseReceiver self, uint8_t* buffer, int apduLength)
 
     uint32_t numberOfDatSetEntries = 0;
 
-    if (buffer[bufPos++] == 0x61) {
+    if (buffer[bufPos++] == 0x61)
+    {
         int gooseLength;
         bufPos = BerDecoder_decodeLength(buffer, &gooseLength, bufPos, apduLength);
-        if (bufPos < 0) {
+        if (bufPos < 0)
+        {
             if (DEBUG_GOOSE_SUBSCRIBER)
                 printf("GOOSE_SUBSCRIBER: Malformed message: failed to decode BER length tag!\n");
             return 0;
@@ -673,12 +675,14 @@ parseGoosePayload(GooseReceiver self, uint8_t* buffer, int apduLength)
 
         int gooseEnd = bufPos + gooseLength;
 
-        while (bufPos < gooseEnd) {
+        while (bufPos < gooseEnd)
+        {
             int elementLength;
 
             uint8_t tag = buffer[bufPos++];
             bufPos = BerDecoder_decodeLength(buffer, &elementLength, bufPos, apduLength);
-            if (bufPos < 0) {
+            if (bufPos < 0)
+            {
                 if (DEBUG_GOOSE_SUBSCRIBER)
                     printf("GOOSE_SUBSCRIBER: Malformed message: failed to decode BER length tag!\n");
                 return 0;
@@ -696,7 +700,8 @@ parseGoosePayload(GooseReceiver self, uint8_t* buffer, int apduLength)
                 {
                     LinkedList element = LinkedList_getNext(self->subscriberList);
 
-                    while (element != NULL) {
+                    while (element)
+                    {
                         GooseSubscriber subscriber = (GooseSubscriber) LinkedList_getData(element);
 
                         if (subscriber->isObserver)
@@ -713,8 +718,10 @@ parseGoosePayload(GooseReceiver self, uint8_t* buffer, int apduLength)
                             matchingSubscriber = subscriber;
                             break;
                         }
-                        else if (subscriber->goCBRefLen == elementLength) {
-                            if (memcmp(subscriber->goCBRef, buffer + bufPos, elementLength) == 0) {
+                        else if (subscriber->goCBRefLen == elementLength)
+                        {
+                            if (memcmp(subscriber->goCBRef, buffer + bufPos, elementLength) == 0)
+                            {
                                 if (DEBUG_GOOSE_SUBSCRIBER)
                                     printf("GOOSE_SUBSCRIBER:   gocbRef is matching!\n");
                                 matchingSubscriber = subscriber;
@@ -832,15 +839,17 @@ parseGoosePayload(GooseReceiver self, uint8_t* buffer, int apduLength)
             bufPos += elementLength;
         }
 
-        if (matchingSubscriber != NULL) {
-
+        if (matchingSubscriber != NULL)
+        {
             matchingSubscriber->timeAllowedToLive = timeAllowedToLive;
             matchingSubscriber->ndsCom = ndsCom;
             matchingSubscriber->simulation = simulation;
 
-            if (matchingSubscriber->dataSetValuesSelfAllocated) {
+            if (matchingSubscriber->dataSetValuesSelfAllocated)
+            {
                 /* when confRev changed replaced old data set */
-                if ((matchingSubscriber->dataSetValues != NULL) && (matchingSubscriber->confRev != confRev)) {
+                if ((matchingSubscriber->dataSetValues != NULL) && (matchingSubscriber->confRev != confRev))
+                {
                     MmsValue_delete(matchingSubscriber->dataSetValues);
                     matchingSubscriber->dataSetValues = NULL;
                 }
@@ -866,7 +875,8 @@ parseGoosePayload(GooseReceiver self, uint8_t* buffer, int apduLength)
 
             if (matchingSubscriber->dataSetValues == NULL)
                 matchingSubscriber->dataSetValues = parseAllDataUnknownValue(matchingSubscriber, dataSetBufferAddress, dataSetBufferLength, false);
-            else {
+            else
+            {
                 GooseParseError parseError = parseAllData(dataSetBufferAddress, dataSetBufferLength, matchingSubscriber->dataSetValues);
 
                 if (parseError != GOOSE_PARSE_ERROR_NO_ERROR) {
@@ -876,7 +886,8 @@ parseGoosePayload(GooseReceiver self, uint8_t* buffer, int apduLength)
                 matchingSubscriber->parseError = parseError;
             }
 
-            if (matchingSubscriber->stNum == stNum) {
+            if (matchingSubscriber->stNum == stNum)
+            {
                 if (matchingSubscriber->sqNum >= sqNum) {
                     isValid = false;
                 }
@@ -920,13 +931,18 @@ parseGooseMessage(GooseReceiver self, uint8_t* buffer, int numbytes)
     uint8_t priority = 0;
     uint16_t vlanId = 0;
     bool vlanSet = false;
+
     /* check for VLAN tag */
-    if ((buffer[bufPos] == 0x81) && (buffer[bufPos + 1] == 0x00)) {
+    if ((buffer[bufPos] == 0x81) && (buffer[bufPos + 1] == 0x00))
+    {
         priority = buffer[bufPos + 2] & 0xF8 >> 5;
         vlanId = ((buffer[bufPos + 2] & 0x07) << 8) + buffer[bufPos + 3];
         vlanSet = true;
         bufPos += 4; /* skip VLAN tag */
         headerLength += 4;
+
+        if (numbytes < (22 + 4))
+            return;
     }
 
     /* check for GOOSE Ethertype */
@@ -956,13 +972,22 @@ parseGooseMessage(GooseReceiver self, uint8_t* buffer, int numbytes)
 
     int apduLength = length - 8;
 
-    if (numbytes < length + headerLength) {
+    if (apduLength < 0)
+    {
+        if (DEBUG_GOOSE_SUBSCRIBER)
+            printf("GOOSE_SUBSCRIBER: Invalid length field\n");
+        return;
+    }
+
+    if (numbytes < length + headerLength)
+    {
         if (DEBUG_GOOSE_SUBSCRIBER)
             printf("GOOSE_SUBSCRIBER: Invalid PDU size\n");
         return;
     }
 
-    if (DEBUG_GOOSE_SUBSCRIBER) {
+    if (DEBUG_GOOSE_SUBSCRIBER)
+    {
         printf("GOOSE_SUBSCRIBER: GOOSE message:\nGOOSE_SUBSCRIBER: ----------------\n");
         printf("GOOSE_SUBSCRIBER:   DST-MAC: %02x:%02x:%02x:%02x:%02X:%02X\n",
                dstMac[0], dstMac[1], dstMac[2], dstMac[3], dstMac[4], dstMac[5]);
@@ -974,7 +999,8 @@ parseGooseMessage(GooseReceiver self, uint8_t* buffer, int numbytes)
     /* check if there is an interested subscriber */
     LinkedList element = LinkedList_getNext(self->subscriberList);
 
-    while (element != NULL) {
+    while (element)
+    {
         GooseSubscriber subscriber = (GooseSubscriber) LinkedList_getData(element);
         
         if (subscriber->isObserver)
@@ -990,7 +1016,8 @@ parseGooseMessage(GooseReceiver self, uint8_t* buffer, int numbytes)
         }
 
         if (((subscriber->appId == -1) || (subscriber->appId == appId)) &&
-                (!subscriber->dstMacSet || (memcmp(subscriber->dstMac, dstMac,6) == 0))) {
+                (!subscriber->dstMacSet || (memcmp(subscriber->dstMac, dstMac,6) == 0)))
+        {
             subscriberFound = true;
             break;
         }
