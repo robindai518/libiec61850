@@ -256,6 +256,16 @@ LIB61850_API void
 IedConnection_setConnectTimeout(IedConnection self, uint32_t timeoutInMs);
 
 /**
+ * \brief Set the maximum number outstanding calls allowed for this connection
+ *
+ * \param self the connection object
+ * \param calling the maximum outstanding calls allowed by the caller (client)
+ * \param called the maximum outstanding calls allowed by the called endpoint (server)
+ */
+LIB61850_API void
+IedConnection_setMaxOutstandingCalls(IedConnection self, int calling, int called);
+
+/**
  * \brief set the request timeout in ms
  *
  * Set the request timeout for this connection. You can call this function any time to adjust

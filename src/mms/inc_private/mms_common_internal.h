@@ -30,8 +30,6 @@
 #include "byte_buffer.h"
 #include "mms_server.h"
 
-#define DEFAULT_MAX_SERV_OUTSTANDING_CALLING 5
-#define DEFAULT_MAX_SERV_OUTSTANDING_CALLED 5
 #define DEFAULT_DATA_STRUCTURE_NESTING_LEVEL 10
 
 typedef struct sMmsOutstandingCall* MmsOutstandingCall;

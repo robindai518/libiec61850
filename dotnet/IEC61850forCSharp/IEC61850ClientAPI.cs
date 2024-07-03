@@ -432,6 +432,9 @@ namespace IEC61850
             static extern UInt32 IedConnection_getRequestTimeout(IntPtr self);
 
             [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
+            static extern void IedConnection_setMaxOutstandingCalls(IntPtr self, int calling, int called);
+
+            [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
             static extern void IedConnection_setTimeQuality(IntPtr self, [MarshalAs(UnmanagedType.I1)] bool leapSecondKnown, [MarshalAs(UnmanagedType.I1)] bool clockFailure, [MarshalAs(UnmanagedType.I1)] bool clockNotSynchronized, int subsecondPrecision);
 
             [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
@@ -813,6 +816,16 @@ namespace IEC61850
                 {
                     IedConnection_setRequestTimeout(connection, value);
                 }
+            }
+
+            /// <summary>
+            /// Set the maximum number outstanding calls allowed for this connection
+            /// </summary>
+            /// <param name="calling">the maximum outstanding calls allowed by the caller (client)</param>
+            /// <param name="called">the maximum outstanding calls allowed by the called endpoint (server)</param>
+            public void SetMaxOutstandingCalls(int calling, int called)
+            {
+                IedConnection_setMaxOutstandingCalls(connection, calling, called);
             }
 
             /// <summary>
