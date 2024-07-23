@@ -487,8 +487,13 @@ parseFileAttributes(uint8_t* buffer, int bufPos, int maxBufPos, uint32_t* fileSi
             break;
         case 0x81: /* lastModified */
             {
-                if (lastModified != NULL) {
+                if (lastModified != NULL)
+                {
                     char gtString[40];
+
+                    if (length > sizeof(gtString) - 1)
+                        return false; /* lastModified string too long */
+
                     memcpy(gtString, buffer + bufPos, length);
                     gtString[length] = 0;
                     *lastModified = Conversions_generalizedTimeToMsTime(gtString);
@@ -515,12 +520,14 @@ parseDirectoryEntry(uint8_t* buffer, int bufPos, int maxBufPos, uint32_t invokeI
     uint32_t fileSize = 0;
     uint64_t lastModified = 0;
 
-    while (bufPos < maxBufPos) {
+    while (bufPos < maxBufPos)
+    {
         uint8_t tag = buffer[bufPos++];
         int length;
 
         bufPos = BerDecoder_decodeLength(buffer, &length, bufPos, maxBufPos);
-        if (bufPos < 0) {
+        if (bufPos < 0)
+        {
             if (DEBUG_MMS_CLIENT)
                 printf("MMS_CLIENT: invalid length field\n");
             return false;
@@ -534,9 +541,17 @@ parseDirectoryEntry(uint8_t* buffer, int bufPos, int maxBufPos, uint32_t invokeI
             tag = buffer[bufPos++];
 
             bufPos = BerDecoder_decodeLength(buffer, &length, bufPos, maxBufPos);
-            if (bufPos < 0) {
+            if (bufPos < 0)
+            {
                 if (DEBUG_MMS_CLIENT)
                     printf("MMS_CLIENT: invalid length field\n");
+                return false;
+            }
+
+            if (length > (sizeof(fileNameMemory) - 1))
+            {
+                if (DEBUG_MMS_CLIENT)
+                    printf("MMS_CLIENT: filename too long\n");
                 return false;
             }
 
