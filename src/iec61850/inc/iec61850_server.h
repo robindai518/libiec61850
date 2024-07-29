@@ -297,6 +297,9 @@ IedServer_setAuthenticator(IedServer self, AcseAuthenticator authenticator, void
 const char*
 ClientConnection_getPeerAddress(ClientConnection self);
 
+IsoConnection
+ClientConnection_getIsoConnection(ClientConnection self);
+
 /**
  * \brief Get the security token associated with this connection
  *

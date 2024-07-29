@@ -435,3 +435,8 @@ MmsServer_stopListeningThreadless(MmsServer self)
     IsoServer_stopListeningThreadless(self->isoServer);
 }
 
+IsoServer
+MmsServer_getIsoServer(MmsServer self)
+{
+    return self->isoServer;
+}

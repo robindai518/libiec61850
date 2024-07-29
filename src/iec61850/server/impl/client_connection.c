@@ -128,6 +128,13 @@ ClientConnection_getPeerAddress(ClientConnection self)
     return IsoConnection_getPeerAddress(MmsServerConnection_getIsoConnection(mmsConnection));
 }
 
+IsoConnection
+ClientConnection_getIsoConnection(ClientConnection self)
+{
+    MmsServerConnection mmsConnection = (MmsServerConnection) self->serverConnectionHandle;
+
+    return MmsServerConnection_getIsoConnection(mmsConnection);
+}
 
 void*
 ClientConnection_getSecurityToken(ClientConnection self)

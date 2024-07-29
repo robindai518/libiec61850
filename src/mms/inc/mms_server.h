@@ -442,6 +442,8 @@ MmsServerConnection_getClientAddress(MmsServerConnection self);
 IsoConnection
 MmsServerConnection_getIsoConnection(MmsServerConnection self);
 
+IsoServer
+MmsServer_getIsoServer(MmsServer self);
 
 /**@}*/
 
