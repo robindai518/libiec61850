@@ -63,7 +63,6 @@ AcseAuthenticationParameter_setAuthMechanism(AcseAuthenticationParameter self, A
     self->mechanism = mechanism;
 }
 
-
 IsoConnectionParameters
 IsoConnectionParameters_create()
 {
@@ -75,7 +74,13 @@ IsoConnectionParameters_create()
 void
 IsoConnectionParameters_destroy(IsoConnectionParameters self)
 {
-    GLOBAL_FREEMEM(self);
+    if (self)
+    {
+        if (self->localIpAddress)
+            GLOBAL_FREEMEM((void*)(self->localIpAddress));
+
+        GLOBAL_FREEMEM(self);
+    }
 }
 
 void
@@ -88,7 +93,6 @@ IsoConnectionParameters_setTlsConfiguration(IsoConnectionParameters self, TLSCon
     (void)tlsConfig;
 #endif
 }
-
 
 void
 IsoConnectionParameters_setAcseAuthenticationParameter(IsoConnectionParameters self,
