@@ -130,9 +130,8 @@ if(CONFIG_USE_EXTERNAL_MBEDTLS_DYNLIB)
 link_directories(${CONFIG_EXTERNAL_MBEDTLS_DYNLIB_PATH})
 else()
 file(GLOB tls_SRCS ${CMAKE_CURRENT_LIST_DIR}/../third_party/mbedtls/mbedtls-2.28/library/*.c)
-endif(CONFIG_USE_EXTERNAL_MBEDTLS_DYNLIB)
-
 add_definitions(-DMBEDTLS_CONFIG_FILE="mbedtls_config.h")
+endif(CONFIG_USE_EXTERNAL_MBEDTLS_DYNLIB)
 
 set (libhal_SRCS ${libhal_SRCS}
   ${CMAKE_CURRENT_LIST_DIR}/tls/mbedtls/tls_mbedtls.c
