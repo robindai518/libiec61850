@@ -1,7 +1,7 @@
 ﻿/*
  *  IEC61850ServerAPI.cs
  *
- *  Copyright 2016-2022 Michael Zillgith
+ *  Copyright 2016-2024 Michael Zillgith
  *
  *  This file is part of libIEC61850.
  *
@@ -2154,6 +2154,97 @@ namespace IEC61850
 
         public delegate CheckHandlerResult CheckHandler (ControlAction action, object parameter, MmsValue ctlVal, bool test, bool interlockCheck);
 
+        public static class SqliteLogStorage
+        {
+            [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
+            static extern IntPtr SqliteLogStorage_createInstanceEx(string filename);
+
+            public static LogStorage CreateLogStorage(string filename)
+            {
+                try
+                {
+                    IntPtr nativeInstance = SqliteLogStorage_createInstanceEx(filename);
+
+                    if (nativeInstance != IntPtr.Zero)
+                        return new LogStorage(nativeInstance);
+                    else
+                        return null;
+                }
+                catch (EntryPointNotFoundException ex)
+                {
+                    Console.WriteLine(ex.Message + " Make sure that the libiec61850.dll was built with sqLite!");
+                    return null;
+                }
+            }
+        }
+
+        public class LogStorage : IDisposable
+        {
+            [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
+            static extern void LogStorage_setMaxLogEntries(IntPtr self, int maxEntries);
+
+            [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
+            static extern int LogStorage_getMaxLogEntries(IntPtr self);
+
+            [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
+            static extern void LogStorage_destroy(IntPtr self);
+
+            private IntPtr self = IntPtr.Zero;
+
+            internal IntPtr GetNativeInstance()
+            {
+                return self;
+            }
+
+            internal LogStorage(IntPtr self)
+            {
+                this.self = self;
+            }
+
+            private void SetMaxLogEntries(int maxEntries)
+            {
+                LogStorage_setMaxLogEntries(self, maxEntries);
+            }
+
+            private int GetMaxLogEntries()
+            {
+                return LogStorage_getMaxLogEntries(self);
+            }
+
+            /// <summary>
+            /// The maximum allowed number of log entries in the log storage
+            /// </summary>
+            public int MaxLogEntries
+            {
+                get
+                {
+                    return GetMaxLogEntries();
+                }
+
+                set
+                {
+                    SetMaxLogEntries(value);
+                }
+            }
+
+            public void Dispose()
+            {
+                lock (this)
+                {
+                    if (self != IntPtr.Zero)
+                    {
+                        LogStorage_destroy(self);
+                        self = IntPtr.Zero;
+                    }
+                }
+            }
+
+            ~LogStorage()
+            {
+                Dispose();
+            }
+        }
+
         /// <summary>
         /// This class acts as the entry point for the IEC 61850 client API. It represents a single
         /// (MMS) connection to a server.
@@ -2319,6 +2410,9 @@ namespace IEC61850
             private InternalControlPerformCheckHandler internalControlPerformCheckHandlerRef = null;
             private InternalControlWaitForExecutionHandler internalControlWaitForExecutionHandlerRef = null;
             private InternalSelectStateChangedHandler internalSelectedStateChangedHandlerRef = null;
+
+            // hold references to managed LogStorage instances to avoid problems with GC
+            private Dictionary<string, LogStorage> logStorages = new Dictionary<string, LogStorage>();
 
             internal class ControlHandlerInfo {
                 public DataObject controlObject = null;
@@ -3089,7 +3183,17 @@ namespace IEC61850
                 IedServer_setTimeQuality(self, leapSecondKnown, clockFailure, clockNotSynchronized, subsecondPrecision);
             }
 
-        }
+            [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
+            static extern void IedServer_setLogStorage(IntPtr self, string logRef, IntPtr logStorage);
 
+            public void SetLogStorage(string logRef, LogStorage logStorage)
+            {
+                if (logStorage != null)
+                {
+                    logStorages.Add(logRef, logStorage);
+                    IedServer_setLogStorage(self, logRef, logStorage.GetNativeInstance());
+                }
+            }
+        }
     }
 }
