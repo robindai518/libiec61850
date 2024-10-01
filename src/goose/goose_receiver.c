@@ -71,7 +71,7 @@ struct sGooseReceiver
 GooseReceiver
 GooseReceiver_createEx(uint8_t* buffer)
 {
-    GooseReceiver self = (GooseReceiver) GLOBAL_MALLOC(sizeof(struct sGooseReceiver));
+    GooseReceiver self = (GooseReceiver) GLOBAL_CALLOC(1, sizeof(struct sGooseReceiver));
 
     if (self)
     {
@@ -79,6 +79,9 @@ GooseReceiver_createEx(uint8_t* buffer)
         self->stop = false;
         self->interfaceId = NULL;
         self->buffer = buffer;
+#if (CONFIG_IEC61850_R_GOOSE == 1)
+        self->session = NULL;
+#endif /* (CONFIG_IEC61850_R_GOOSE == 1) */
         self->ethSocket = NULL;
         self->subscriberList = LinkedList_create();
 #if (CONFIG_MMS_THREADLESS_STACK == 0)
