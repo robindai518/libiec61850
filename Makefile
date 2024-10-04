@@ -89,8 +89,6 @@ CFLAGS += -D'CONFIG_IEC61850_R_GOOSE=1'
 CFLAGS += -D'CONFIG_IEC61850_R_SMV=1'
 endif
 
-LIB_INCLUDE_DIRS += src/logging/drivers/sqlite/log_storage_sqlite.c
-
 LIB_INCLUDES = $(addprefix -I,$(LIB_INCLUDE_DIRS))
 
 ifndef INSTALL_PREFIX
