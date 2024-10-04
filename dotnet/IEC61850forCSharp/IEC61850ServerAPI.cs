@@ -2157,13 +2157,13 @@ namespace IEC61850
         public static class SqliteLogStorage
         {
             [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
-            static extern IntPtr SqliteLogStorage_createInstanceEx(string filename);
+            static extern IntPtr SqliteLogStorage_createInstance(string filename);
 
             public static LogStorage CreateLogStorage(string filename)
             {
                 try
                 {
-                    IntPtr nativeInstance = SqliteLogStorage_createInstanceEx(filename);
+                    IntPtr nativeInstance = SqliteLogStorage_createInstance(filename);
 
                     if (nativeInstance != IntPtr.Zero)
                         return new LogStorage(nativeInstance);
