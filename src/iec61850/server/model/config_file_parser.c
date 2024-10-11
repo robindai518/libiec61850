@@ -448,9 +448,12 @@ ConfigFileParser_createModelFromConfigFile(FileHandle fileHandle)
                         if (matchedItems < 5) goto exit_error;
 
                         currentGoCB = GSEControlBlock_create(nameString, currentLN, nameString2,
-                                nameString3, confRef, fixedOffs, minTime, maxTime);
+                                    nameString3, confRef, fixedOffs, minTime, maxTime);
 
-                        indendation = 4;
+                        if (StringUtils_endsWith((char*) lineBuffer, "{"))
+                        {
+                            indendation = 4;
+                        }
                     }
                     else if (StringUtils_startsWith((char*) lineBuffer, "SMVC"))
                     {
@@ -467,12 +470,14 @@ ConfigFileParser_createModelFromConfigFile(FileHandle fileHandle)
 
                         currentSMVCB = SVControlBlock_create(nameString, currentLN, nameString2, nameString3, confRev, smpMod, smpRate, optFlds, (bool) isUnicast);
 
-                        indendation = 4;
+                        if (StringUtils_endsWith((char*) lineBuffer, "{"))
+                        {
+                            indendation = 4;
+                        }
                     }
 #if (CONFIG_IEC61850_SETTING_GROUPS == 1)
                     else if (StringUtils_startsWith((char*) lineBuffer, "SG"))
                     {
-
                         if (strcmp(currentLN->name, "LLN0") != 0) {
                             if (DEBUG_IED_SERVER)
                                 printf("IED_SERVER: Setting group control is not defined in LLN0\n");
@@ -492,13 +497,13 @@ ConfigFileParser_createModelFromConfigFile(FileHandle fileHandle)
                     }
 #endif /* (CONFIG_IEC61850_SETTING_GROUPS == 1) */
 
-                    else {
+                    else
+                    {
                         if (DEBUG_IED_SERVER)
                             printf("IED_SERVER: Unknown identifier (%s)\n", lineBuffer);
 
                         goto exit_error;
                     }
-
                 }
                 else if (indendation > 3)
                 {
