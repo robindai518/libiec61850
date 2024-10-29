@@ -58,7 +58,6 @@ IedModel_setAttributeValuesToNull(IedModel* iedModel)
 
     while (ld != NULL)
     {
-
         LogicalNode* ln = (LogicalNode*)ld->firstChild;
 
         while (ln != NULL)
