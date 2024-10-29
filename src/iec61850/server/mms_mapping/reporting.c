@@ -2679,8 +2679,10 @@ exit_function_only_tracking:
 static void
 Reporting_disableReportControlInstance(MmsMapping* self, ReportControl* rc)
 {
-    if (rc->enabled) {
-        if (self->rcbEventHandler) {
+    if (rc->enabled)
+    {
+        if (self->rcbEventHandler)
+        {
             ClientConnection clientConnection = private_IedServer_getClientConnectionByHandle(self->iedServer, rc->clientConnection);
 
             self->rcbEventHandler(self->rcbEventHandlerParameter, rc->rcb, clientConnection, RCB_EVENT_DISABLE, NULL, DATA_ACCESS_ERROR_SUCCESS);
@@ -2701,19 +2703,22 @@ Reporting_disableReportControlInstance(MmsMapping* self, ReportControl* rc)
     Semaphore_post(rc->rcbValuesLock);
 #endif
 
-    if (rc->reserved) {
+    if (rc->reserved)
+    {
         rc->reserved = false;
 
-        if (self->rcbEventHandler) {
+        if (self->rcbEventHandler)
+        {
             ClientConnection clientConnection = private_IedServer_getClientConnectionByHandle(self->iedServer, rc->clientConnection);
 
             self->rcbEventHandler(self->rcbEventHandlerParameter, rc->rcb, clientConnection, RCB_EVENT_UNRESERVED, NULL, DATA_ACCESS_ERROR_SUCCESS);
         }
     }
 
-    if (rc->buffered == false) {
-
-        if (rc->resvTms != -1) {
+    if (rc->buffered == false)
+    {
+        if (rc->resvTms != -1)
+        {
 #if (CONFIG_MMS_THREADLESS_STACK != 1)
             Semaphore_wait(rc->rcbValuesLock);
 #endif
@@ -2732,7 +2737,8 @@ Reporting_disableReportControlInstance(MmsMapping* self, ReportControl* rc)
         /* delete buffer content */
         purgeBuf(rc);
     }
-    else {
+    else
+    {
         if (rc->resvTms == 0)
             updateOwner(rc, NULL);
         else if (rc->resvTms > 0) {
@@ -2751,7 +2757,8 @@ Reporting_deactivateAllReports(MmsMapping* self)
 {
     LinkedList rcElem = LinkedList_getNext(self->reportControls);
 
-    while (rcElem) {
+    while (rcElem)
+    {
         ReportControl* rc = (ReportControl*)LinkedList_getData(rcElem);
 
         Reporting_disableReportControlInstance(self, rc);
@@ -2765,7 +2772,8 @@ Reporting_deactivateReportsForConnection(MmsMapping* self, MmsServerConnection c
 {
     LinkedList rcElem = LinkedList_getNext(self->reportControls);
 
-    while (rcElem) {
+    while (rcElem)
+    {
         ReportControl* rc = (ReportControl*)LinkedList_getData(rcElem);
 
         if (rc->clientConnection == connection) {
@@ -2835,13 +2843,16 @@ removeAllGIReportsFromReportBuffer(ReportBuffer* reportBuffer)
     ReportBufferEntry* currentReport = reportBuffer->oldestReport;
     ReportBufferEntry* lastReport = NULL;
 
-    while (currentReport != NULL) {
-        if (currentReport->flags & 2) {
-
-            if (currentReport == reportBuffer->oldestReport) {
+    while (currentReport != NULL)
+    {
+        if (currentReport->flags & 2)
+        {
+            if (currentReport == reportBuffer->oldestReport)
+            {
                 reportBuffer->oldestReport = currentReport->next;
             }
-            else {
+            else
+            {
                 if (lastReport != NULL)
                     lastReport->next = currentReport->next;
                 else
@@ -2849,9 +2860,9 @@ removeAllGIReportsFromReportBuffer(ReportBuffer* reportBuffer)
             }
 
 #if (DEBUG_IED_SERVER == 1)
-                printf("IED_SERVER:   REMOVE old GI report with ID ");
-                printReportId(currentReport);
-                printf("\n");
+            printf("IED_SERVER:   REMOVE old GI report with ID ");
+            printReportId(currentReport);
+            printf("\n");
 #endif
 
             reportBuffer->reportsCount--;
@@ -2859,7 +2870,8 @@ removeAllGIReportsFromReportBuffer(ReportBuffer* reportBuffer)
             if (reportBuffer->nextToTransmit == currentReport)
                 reportBuffer->nextToTransmit = currentReport->next;
 
-            if (reportBuffer->lastEnqueuedReport == currentReport) {
+            if (reportBuffer->lastEnqueuedReport == currentReport)
+            {
                 if (lastReport != NULL)
                     reportBuffer->lastEnqueuedReport = lastReport;
                 else
@@ -2924,7 +2936,8 @@ enqueueReport(ReportControl* reportControl, bool isIntegrity, bool isGI, uint64_
 
             int encodedSize;
 
-            if (dataSetEntry->value) {
+            if (dataSetEntry->value)
+            {
                 encodedSize = MmsValue_encodeMmsData(dataSetEntry->value, NULL, 0, false);
             }
             else
@@ -2972,14 +2985,16 @@ enqueueReport(ReportControl* reportControl, bool isIntegrity, bool isGI, uint64_
     if (DEBUG_IED_SERVER)
         printf("IED_SERVER: enqueueReport: bufferEntrySize: %i\n", bufferEntrySize);
 
-    if (bufferEntrySize > buffer->memoryBlockSize) {
+    if (bufferEntrySize > buffer->memoryBlockSize)
+    {
         if (DEBUG_IED_SERVER)
             printf("IED_SERVER: enqueueReport: report buffer too small for report entry! Skip event!\n");
 
         goto exit_function;
     }
 
-    if (isBuffered) {
+    if (isBuffered)
+    {
         /* remove old buffered GI reports */
         if (isGI) removeAllGIReportsFromReportBuffer(buffer);
     }
@@ -3002,7 +3017,8 @@ enqueueReport(ReportControl* reportControl, bool isIntegrity, bool isGI, uint64_
         assert(buffer->lastEnqueuedReport != NULL);
         assert(buffer->oldestReport != NULL);
 
-        if (DEBUG_IED_SERVER) {
+        if (DEBUG_IED_SERVER)
+        {
             printf("IED_SERVER:   buffer->lastEnqueuedReport: %p\n", buffer->lastEnqueuedReport);
             printf("IED_SERVER:   buffer->oldestReport: %p\n", buffer->oldestReport);
             printf("IED_SERVER:   buffer->nextToTransmit: %p\n", buffer->nextToTransmit);
@@ -3383,7 +3399,8 @@ sendNextReportEntrySegment(ReportControl* self)
 
     MmsValue* confRev = ReportControl_getRCBValue(self, "ConfRev");
 
-    if (isBuffered) {
+    if (isBuffered)
+    {
         MmsValue* entryIdValue = MmsValue_getElement(self->rcbValues, 11);
         MmsValue_setOctetString(entryIdValue, (uint8_t*) report->entryId, 8);
     }
@@ -3399,7 +3416,8 @@ sendNextReportEntrySegment(ReportControl* self)
 
     const char* rptIdStr = MmsValue_toString(rptIdFromRcb);
 
-    if (rptIdStr[0] == 0) {
+    if (rptIdStr[0] == 0)
+    {
         /* use default rptId when RptID is empty in RCB */
         updateWithDefaultRptId(self, &rptId);
     }
@@ -3409,7 +3427,8 @@ sendNextReportEntrySegment(ReportControl* self)
 
     MmsValue* optFlds = ReportControl_getRCBValue(self, "OptFlds");
 
-    if (isBuffered == false) {
+    if (isBuffered == false)
+    {
         /* delete option fields for unrelated options (not present in unbuffered report) */
         MmsValue_setBitStringBit(optFlds, 6, false); /* bufOvfl */
         MmsValue_setBitStringBit(optFlds, 7, false); /* entryID */
@@ -3424,8 +3443,8 @@ sendNextReportEntrySegment(ReportControl* self)
 
     MmsValue* inclusionField = NULL;
 
-    if (report->flags == 0) {
-
+    if (report->flags == 0)
+    {
         inclusionField = &_inclusionField;
 
         _inclusionField.type = MMS_BIT_STRING;
@@ -3457,7 +3476,8 @@ sendNextReportEntrySegment(ReportControl* self)
     MmsValue _timeOfEntry;
     MmsValue* timeOfEntry = NULL;
 
-    if (MmsValue_getBitStringBit(optFlds, 2)) { /* report time stamp */
+    if (MmsValue_getBitStringBit(optFlds, 2)) /* report time stamp */
+    {
         hasReportTimestamp = true;
     	_timeOfEntry.type = MMS_BINARY_TIME;
     	_timeOfEntry.value.binaryTime.size = 6;
@@ -3470,7 +3490,8 @@ sendNextReportEntrySegment(ReportControl* self)
 
     MmsValue* datSet = ReportControl_getRCBValue(self, "DatSet");
 
-    if (MmsValue_getBitStringBit(optFlds, 4)) {/* data set reference */
+    if (MmsValue_getBitStringBit(optFlds, 4)) /* data set reference */
+    {
         hasDataSetReference = true;
         accessResultSize += MmsValue_encodeMmsData(datSet, NULL, 0, false);
     }
@@ -3478,8 +3499,10 @@ sendNextReportEntrySegment(ReportControl* self)
     MmsValue _bufOvfl;
     MmsValue* bufOvfl = NULL;
 
-    if (isBuffered) {
-        if (MmsValue_getBitStringBit(optFlds, 6)) { /* bufOvfl */
+    if (isBuffered)
+    {
+        if (MmsValue_getBitStringBit(optFlds, 6)) /* bufOvfl */
+        {
             hasBufOvfl = true;
 
             bufOvfl = &_bufOvfl;
@@ -3494,8 +3517,10 @@ sendNextReportEntrySegment(ReportControl* self)
     MmsValue _entryId;
     MmsValue* entryId = NULL;
 
-    if (isBuffered) {
-        if (MmsValue_getBitStringBit(optFlds, 7)) { /* entryID */
+    if (isBuffered)
+    {
+        if (MmsValue_getBitStringBit(optFlds, 7)) /* entryID */
+        {
             hasEntryId = true;
             entryId = &_entryId;
 
@@ -3508,7 +3533,8 @@ sendNextReportEntrySegment(ReportControl* self)
         }
     }
 
-    if (MmsValue_getBitStringBit(optFlds, 8)) {
+    if (MmsValue_getBitStringBit(optFlds, 8))
+    {
         hasConfRev = true;
         accessResultSize += MmsValue_encodeMmsData(confRev, NULL, 0, false);
     }
@@ -3544,16 +3570,16 @@ sendNextReportEntrySegment(ReportControl* self)
 
     int numberOfAddedElements = 0;
 
-    for (i = 0; i < self->dataSet->elementCount; i++) {
-
-        if ((report->flags > 0) || MmsValue_getBitStringBit(inclusionField, i)) {
-
-            if (i >= startElementIndex) {
-
+    for (i = 0; i < self->dataSet->elementCount; i++)
+    {
+        if ((report->flags > 0) || MmsValue_getBitStringBit(inclusionField, i))
+        {
+            if (i >= startElementIndex)
+            {
                 int elementSize = 0;
 
-                if (withDataReference) {
-
+                if (withDataReference)
+                {
                     DataSetEntry* dataSetEntry = getDataSetEntryWithIndex(self->dataSet->fcdas, i);
 
                     char dataReference[130];
@@ -3593,7 +3619,8 @@ sendNextReportEntrySegment(ReportControl* self)
 
                     int lenSize = BerDecoder_decodeLength(currentReportBufferPos + 1, &length, 0, report->entryLength);
 
-                    if (lenSize < 0) {
+                    if (lenSize < 0)
+                    {
                         if (DEBUG_IED_SERVER)
                             printf("IED_SERVER: internal error in report buffer\n");
 
@@ -3606,13 +3633,12 @@ sendNextReportEntrySegment(ReportControl* self)
                     currentReportBufferPos += dataElementSize;
                 }
 
-
                 if (withReasonCode) {
                     elementSize += 4; /* reason code size is always 4 byte */
                 }
 
-                if ((estimatedSegmentSize + elementSize) > maxMmsPduSize) {
-
+                if ((estimatedSegmentSize + elementSize) > maxMmsPduSize)
+                {
                     segmented = true;
                     moreFollows = true;
                     _moreFollows.value.boolean = true;
@@ -3630,13 +3656,15 @@ sendNextReportEntrySegment(ReportControl* self)
                 accessResultSize += elementSize;
                 estimatedSegmentSize += elementSize;
             }
-            else {
+            else
+            {
                 /* move element pointer in report buffer to skip elements that were already sent in former segments */
                 int length;
 
                 int lenSize = BerDecoder_decodeLength(currentReportBufferPos + 1, &length, 0, report->entryLength);
 
-                if (lenSize < 0) {
+                if (lenSize < 0)
+                {
                     if (DEBUG_IED_SERVER)
                         printf("IED_SERVER: internal error in report buffer\n");
 
@@ -3656,7 +3684,8 @@ sendNextReportEntrySegment(ReportControl* self)
 
     /* now calculate the exact information report segment size */
 
-    if (segmented) {
+    if (segmented)
+    {
         int segmentedSize = MmsValue_encodeMmsData(&_moreFollows, NULL, 0, false) + MmsValue_encodeMmsData(subSeqNum, NULL, 0, false);
         accessResultSize += segmentedSize;
     }
@@ -3667,7 +3696,8 @@ sendNextReportEntrySegment(ReportControl* self)
     uint32_t informationReportSize = 1 + informationReportContentSize + BerEncoder_determineLengthSize(informationReportContentSize);
     uint32_t completeMessageSize = 1 + informationReportSize + BerEncoder_determineLengthSize(informationReportSize);
 
-    if (((int) completeMessageSize > maxMmsPduSize) || (numberOfAddedElements == 0)) {
+    if (((int) completeMessageSize > maxMmsPduSize) || (numberOfAddedElements == 0))
+    {
         if (DEBUG_IED_SERVER)
             printf("IED_SERVER: MMS PDU size too small to encode report data (max PDU size = %i) -> skip message!\n", maxMmsPduSize);
 
@@ -3730,10 +3760,12 @@ sendNextReportEntrySegment(ReportControl* self)
     bufPos = MmsValue_encodeMmsData(self->inclusionField, buffer, bufPos, true);
 
     /* encode data references if selected */
-    if (MmsValue_getBitStringBit(optFlds, 5)) { /* data-reference */
+    if (MmsValue_getBitStringBit(optFlds, 5)) /* data-reference */
+    {
         DataSetEntry* dataSetEntry = getDataSetEntryWithIndex(self->dataSet->fcdas, startElementIndex);
 
-        for (i = startElementIndex; i < maxIndex; i++) {
+        for (i = startElementIndex; i < maxIndex; i++)
+        {
             bool addReferenceForEntry = false;
 
             if (report->flags > 0)
@@ -3741,8 +3773,8 @@ sendNextReportEntrySegment(ReportControl* self)
             else if (MmsValue_getBitStringBit(self->inclusionField, i))
                 addReferenceForEntry = true;
 
-            if (addReferenceForEntry) {
-
+            if (addReferenceForEntry)
+            {
                 char dataReference[130];
                 int currentPos = 0;
 
@@ -3753,7 +3785,8 @@ sendNextReportEntrySegment(ReportControl* self)
                 }
 
                 int ldNameLength =  (int) strlen(dataSetEntry->logicalDeviceName);
-                for (j = 0; j <  ldNameLength; j++) {
+                for (j = 0; j <  ldNameLength; j++)
+                {
                     dataReference[currentPos] = dataSetEntry->logicalDeviceName[j];
                     currentPos++;
                 }

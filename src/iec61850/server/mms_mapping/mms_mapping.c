@@ -1952,8 +1952,8 @@ createDataSets(MmsDevice* mmsDevice, IedModel* iedModel)
     {
         LogicalDevice* ld = IedModel_getDeviceByInst(iedModel, dataset->logicalDeviceName);
 
-        if (ld) {
-
+        if (ld)
+        {
             if (ld->ldName) {
                 StringUtils_copyStringMax(domainName, 65, ld->ldName);
             }
@@ -1963,8 +1963,8 @@ createDataSets(MmsDevice* mmsDevice, IedModel* iedModel)
 
             MmsDomain* dataSetDomain = MmsDevice_getDomain(mmsDevice, domainName);
 
-            if (dataSetDomain == NULL) {
-
+            if (dataSetDomain == NULL)
+            {
                 if (DEBUG_IED_SERVER)
                     printf("IED_SERVER: MMS domain for dataset does not exist!\n");
 
@@ -1978,8 +1978,8 @@ createDataSets(MmsDevice* mmsDevice, IedModel* iedModel)
 
             DataSetEntry* dataSetEntry = dataset->fcdas;
 
-            while (dataSetEntry != NULL) {
-
+            while (dataSetEntry != NULL)
+            {
                 MmsAccessSpecifier accessSpecifier;
 
                 if (ld->ldName) {
@@ -2004,7 +2004,8 @@ createDataSets(MmsDevice* mmsDevice, IedModel* iedModel)
 
             MmsDomain_addNamedVariableList(dataSetDomain, varList);
         }
-        else {
+        else
+        {
             if (DEBUG_IED_SERVER)
                 printf("IED_SERVER: LD for dataset does not exist!\n");
         }
