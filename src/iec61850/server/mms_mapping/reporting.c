@@ -3894,18 +3894,32 @@ sendNextReportEntrySegment(ReportControl* self)
                     char dataReference[130];
                     int currentPos = 0;
 
+                    LogicalDevice* entryLd = (LogicalDevice*)IedModel_getModelNodeByShortObjectReference(iedModel, dataSetEntry->logicalDeviceName);
+
                     int j;
 
-                    for (j = 0; j < iedNameLength; j++)
+                    if (entryLd->ldName)
                     {
-                        dataReference[currentPos++] = iedName[j];
-                    }
+                        int ldNameLength = (int)strlen(entryLd->ldName);
 
-                    int ldNameLength = (int)strlen(dataSetEntry->logicalDeviceName);
-                    for (j = 0; j < ldNameLength; j++)
+                        for (j = 0; j < ldNameLength; j++)
+                        {
+                            dataReference[currentPos++] = entryLd->ldName[j];
+                        }
+                    }
+                    else
                     {
-                        dataReference[currentPos] = dataSetEntry->logicalDeviceName[j];
-                        currentPos++;
+                        for (j = 0; j < iedNameLength; j++)
+                        {
+                            dataReference[currentPos++] = iedName[j];
+                        }
+
+                        int ldNameLength = (int)strlen(dataSetEntry->logicalDeviceName);
+                        for (j = 0; j < ldNameLength; j++)
+                        {
+                            dataReference[currentPos] = dataSetEntry->logicalDeviceName[j];
+                            currentPos++;
+                        }
                     }
 
                     dataReference[currentPos++] = '/';
@@ -4095,18 +4109,32 @@ sendNextReportEntrySegment(ReportControl* self)
                 char dataReference[130];
                 int currentPos = 0;
 
+                LogicalDevice* entryLd = (LogicalDevice*)IedModel_getModelNodeByShortObjectReference(iedModel, dataSetEntry->logicalDeviceName);
+
                 int j;
 
-                for (j = 0; j < iedNameLength; j++)
+                if (entryLd->ldName)
                 {
-                    dataReference[currentPos++] = iedName[j];
-                }
+                    int ldNameLength = (int)strlen(entryLd->ldName);
 
-                int ldNameLength = (int)strlen(dataSetEntry->logicalDeviceName);
-                for (j = 0; j < ldNameLength; j++)
+                    for (j = 0; j < ldNameLength; j++)
+                    {
+                        dataReference[currentPos++] = entryLd->ldName[j];
+                    }
+                }
+                else
                 {
-                    dataReference[currentPos] = dataSetEntry->logicalDeviceName[j];
-                    currentPos++;
+                    for (j = 0; j < iedNameLength; j++)
+                    {
+                        dataReference[currentPos++] = iedName[j];
+                    }
+
+                    int ldNameLength = (int)strlen(dataSetEntry->logicalDeviceName);
+                    for (j = 0; j < ldNameLength; j++)
+                    {
+                        dataReference[currentPos] = dataSetEntry->logicalDeviceName[j];
+                        currentPos++;
+                    }
                 }
 
                 dataReference[currentPos++] = '/';
@@ -4136,7 +4164,6 @@ sendNextReportEntrySegment(ReportControl* self)
     /* encode data set value elements */
     for (i = 0; i < maxIndex; i++)
     {
-
         bool isInBuffer = false;
 
         if (report->flags > 0)
@@ -4190,7 +4217,6 @@ sendNextReportEntrySegment(ReportControl* self)
 
         for (i = 0; i < maxIndex; i++)
         {
-
             bool isIncluded = false;
 
             if (report->flags > 0)
@@ -4225,7 +4251,6 @@ sendNextReportEntrySegment(ReportControl* self)
 
             if (isIncluded)
             {
-
                 if (i >= startElementIndex)
                     bufPos = MmsValue_encodeMmsData(&_reason, buffer, bufPos, true);
 
@@ -4268,7 +4293,6 @@ exit_remove_report:
 
     if (segmented == false)
     {
-
         assert(self->reportBuffer->nextToTransmit != self->reportBuffer->nextToTransmit->next);
 
         self->reportBuffer->nextToTransmit = self->reportBuffer->nextToTransmit->next;
