@@ -727,7 +727,6 @@ checkIfClientHasAccessToDataSetEntries(MmsMapping* mapping, MmsServerConnection 
 
     if (connection)
     {
-
         LinkedList entryElem = LinkedList_getNext(mmsVariableList->listOfVariables);
 
         while (entryElem)
@@ -739,7 +738,6 @@ checkIfClientHasAccessToDataSetEntries(MmsMapping* mapping, MmsServerConnection 
 
             if (entryValue)
             {
-
                 if (MmsValue_getType(entryValue) == MMS_DATA_ACCESS_ERROR)
                 {
                     accessAllowed = false;
@@ -749,6 +747,9 @@ checkIfClientHasAccessToDataSetEntries(MmsMapping* mapping, MmsServerConnection 
             }
             else
             {
+                if (DEBUG_IED_SERVER)
+                    printf("IED_SERVER: data set entry %s/%s does not exist\n",  entry->domain ? MmsDomain_getName(entry->domain) : "-", entry->variableName);
+
                 accessAllowed = false;
             }
 
@@ -834,7 +835,6 @@ updateReportDataset(MmsMapping* mapping, ReportControl* rc, MmsValue* newDatSet,
         {
             if (dataSetLdName && dataSetName)
             {
-
                 char externalVisibleName[256];
 
                 /* Construct external visible name */
@@ -881,7 +881,6 @@ updateReportDataset(MmsMapping* mapping, ReportControl* rc, MmsValue* newDatSet,
 
         if (dataSet)
         {
-
             char domainNameBuf[130];
 
             MmsMapping_getMmsDomainFromObjectReference(dataSetName, domainNameBuf);
@@ -909,11 +908,9 @@ updateReportDataset(MmsMapping* mapping, ReportControl* rc, MmsValue* newDatSet,
 
             if (dataSet == NULL)
             {
-
                 /* check if association specific data set is requested */
                 if (dataSetName[0] == '@')
                 {
-
                     if (rc->buffered == false)
                     { /* for buffered report non-permanent datasets are not allowed */
                         if (connection != NULL)
@@ -972,7 +969,6 @@ updateReportDataset(MmsMapping* mapping, ReportControl* rc, MmsValue* newDatSet,
 
         if (dataSetChanged)
         {
-
             /* delete pending event and create buffer for new data set */
             deleteDataSetValuesShadowBuffer(rc);
 
@@ -1139,13 +1135,10 @@ refreshIntegrityPeriod(ReportControl* rc)
 
     if (rc->buffered == false)
     {
-
         if (rc->triggerOps & TRG_OPT_INTEGRITY)
         {
-
             if (rc->intgPd > 0)
             {
-
                 if (rc->server->syncIntegrityReportTimes)
                 {
                     rc->nextIntgReportTime = getNextRoundedStartTime(Hal_getTimeInMs(), rc->intgPd);
@@ -1327,32 +1320,28 @@ createUnbufferedReportControlBlock(ReportControlBlock* reportControlBlock, Repor
     rcb->typeSpec.structure.elements[10] = namedVariable;
     mmsValue->value.structure.components[10] = MmsValue_newBoolean(false);
 
-    if (reportControl->server->edition >= IEC_61850_EDITION_2)
+    if ((reportControl->server->edition >= IEC_61850_EDITION_2) && (reportControl->hasOwner))
     {
+        namedVariable = (MmsVariableSpecification*)GLOBAL_CALLOC(1, sizeof(MmsVariableSpecification));
+        namedVariable->name = StringUtils_copyString("Owner");
+        namedVariable->type = MMS_OCTET_STRING;
+        namedVariable->typeSpec.octetString = -64;
+        rcb->typeSpec.structure.elements[11] = namedVariable;
+        mmsValue->value.structure.components[11] =
+            MmsValue_newOctetString(0, 16); /* size 16 is enough to store client IPv6 address */
 
-        if (reportControl->hasOwner)
+        /* initialize pre configured owner */
+        if (reportControlBlock->clientReservation[0] == 4)
         {
-            namedVariable = (MmsVariableSpecification*)GLOBAL_CALLOC(1, sizeof(MmsVariableSpecification));
-            namedVariable->name = StringUtils_copyString("Owner");
-            namedVariable->type = MMS_OCTET_STRING;
-            namedVariable->typeSpec.octetString = -64;
-            rcb->typeSpec.structure.elements[11] = namedVariable;
-            mmsValue->value.structure.components[11] =
-                MmsValue_newOctetString(0, 16); /* size 16 is enough to store client IPv6 address */
-
-            /* initialize pre configured owner */
-            if (reportControlBlock->clientReservation[0] == 4)
-            {
-                reportControl->resvTms = -1;
-                MmsValue_setOctetString(mmsValue->value.structure.components[11],
-                                        reportControlBlock->clientReservation + 1, 4);
-            }
-            else if (reportControlBlock->clientReservation[0] == 6)
-            {
-                reportControl->resvTms = -1;
-                MmsValue_setOctetString(mmsValue->value.structure.components[11],
-                                        reportControlBlock->clientReservation + 1, 16);
-            }
+            reportControl->resvTms = -1;
+            MmsValue_setOctetString(mmsValue->value.structure.components[11],
+                                    reportControlBlock->clientReservation + 1, 4);
+        }
+        else if (reportControlBlock->clientReservation[0] == 6)
+        {
+            reportControl->resvTms = -1;
+            MmsValue_setOctetString(mmsValue->value.structure.components[11],
+                                    reportControlBlock->clientReservation + 1, 16);
         }
     }
 
@@ -1581,7 +1570,6 @@ getRCBForLogicalNodeWithIndex(MmsMapping* self, LogicalNode* logicalNode, int in
     {
         if (nextRcb->parent == logicalNode)
         {
-
             if (nextRcb->buffered == buffered)
             {
                 if (rcbCount == index)
@@ -1715,12 +1703,10 @@ updateOwner(ReportControl* rc, MmsServerConnection connection)
 
     if (rc->server->edition >= IEC_61850_EDITION_2 && rc->hasOwner)
     {
-
         MmsValue* owner = ReportControl_getRCBValue(rc, "Owner");
 
         if (owner != NULL)
         {
-
             if (connection != NULL)
             {
                 char* clientAddressString = MmsServerConnection_getClientAddress(connection);
@@ -1860,7 +1846,6 @@ checkReservationTimeout(MmsMapping* self, ReportControl* rc)
         {
             if (Hal_getTimeInMs() > rc->reservationTimeout)
             {
-
                 if (rc->resvTms != -1)
                     rc->resvTms = 0;
 
@@ -1969,7 +1954,6 @@ isIpAddressMatchingWithOwner(ReportControl* rc, const char* ipAddress)
 
     if (owner != NULL)
     {
-
         if (MmsValue_getOctetStringSize(owner) == 0)
         {
             retVal = true;
@@ -2089,7 +2073,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
     /* check reservation timeout for buffered RCBs */
     if (rc->buffered)
     {
-
         checkReservationTimeout(self, rc);
 
         if (rc->resvTms == 0)
@@ -2098,13 +2081,10 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
         }
         else if (rc->resvTms == -1)
         {
-
             if (rc->reserved == false)
             {
-
                 if (self->iedServer->edition < IEC_61850_EDITION_2_1)
                 {
-
 #if (CONFIG_IEC61850_RCB_ALLOW_ONLY_PRECONFIGURED_CLIENT == 1)
                     if (isIpAddressMatchingWithOwner(rc, MmsServerConnection_getClientAddress(connection)))
                     {
@@ -2139,7 +2119,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
         {
             if (rc->reserved == false)
             {
-
                 if (isIpAddressMatchingWithOwner(rc, MmsServerConnection_getClientAddress(connection)))
                 {
                     rc->reserved = true;
@@ -2208,10 +2187,8 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
 
     if (strcmp(elementName, "RptEna") == 0)
     {
-
         if (value->value.boolean == true)
         {
-
             if (rc->enabled == true)
             {
                 retVal = DATA_ACCESS_ERROR_TEMPORARILY_UNAVAILABLE;
@@ -2224,10 +2201,8 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
 
             if (updateReportDataset(self, rc, NULL, connection))
             {
-
                 if (rc->reserved == false)
                 {
-
                     rc->resvTms = RESV_TMS_IMPLICIT_VALUE;
 
                     reserveRcb(rc, connection);
@@ -2254,7 +2229,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
 
                 if (rc->buffered)
                 {
-
                     if (rc->isResync == false)
                     {
                         rc->reportBuffer->nextToTransmit = rc->reportBuffer->oldestReport;
@@ -2351,7 +2325,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
     {
         if ((rc->enabled) && (rc->clientConnection == connection))
         {
-
             if (MmsValue_getBoolean(value))
             {
                 if (rc->triggerOps & TRG_OPT_GI)
@@ -2378,7 +2351,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
 
     if (rc->enabled == false)
     {
-
         if ((rc->reserved) && (rc->clientConnection != connection))
         {
             retVal = DATA_ACCESS_ERROR_TEMPORARILY_UNAVAILABLE;
@@ -2394,7 +2366,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
 
             if (rc->reserved == true)
             {
-
                 if (self->rcbEventHandler)
                 {
                     self->rcbEventHandler(self->rcbEventHandlerParameter, rc->rcb, clientConnection, RCB_EVENT_RESERVED,
@@ -2423,7 +2394,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
         {
             if (MmsValue_getType(value) == MMS_BOOLEAN)
             {
-
                 if (MmsValue_getBoolean(value) == true)
                 {
                     purgeBuf(rc);
@@ -2441,7 +2411,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
         }
         else if (strcmp(elementName, "DatSet") == 0)
         {
-
             if (!(self->iedServer->rcbSettingsWritable & IEC61850_REPORTSETTINGS_DATSET))
             {
                 retVal = DATA_ACCESS_ERROR_OBJECT_ACCESS_DENIED;
@@ -2456,10 +2425,8 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
 
             if (!MmsValue_equals(datSet, value))
             {
-
                 if (updateReportDataset(self, rc, value, connection))
                 {
-
                     MmsValue_update(datSet, value);
 
                     increaseConfRev(rc);
@@ -2502,7 +2469,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
         }
         else if (strcmp(elementName, "IntgPd") == 0)
         {
-
             if (!(self->iedServer->rcbSettingsWritable & IEC61850_REPORTSETTINGS_INTG_PD))
             {
                 retVal = DATA_ACCESS_ERROR_OBJECT_ACCESS_DENIED;
@@ -2527,13 +2493,10 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
 
                 if (rc->buffered)
                 {
-
                     if (rc->triggerOps & TRG_OPT_INTEGRITY)
                     {
-
                         if (rc->intgPd > 0)
                         {
-
                             if (rc->server->syncIntegrityReportTimes)
                             {
                                 rc->nextIntgReportTime = getNextRoundedStartTime(Hal_getTimeInMs(), rc->intgPd);
@@ -2565,7 +2528,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
         }
         else if (strcmp(elementName, "TrgOps") == 0)
         {
-
             if (!(self->iedServer->rcbSettingsWritable & IEC61850_REPORTSETTINGS_TRG_OPS))
             {
                 retVal = DATA_ACCESS_ERROR_OBJECT_ACCESS_DENIED;
@@ -2610,10 +2572,8 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
         }
         else if (strcmp(elementName, "EntryID") == 0)
         {
-
             if (MmsValue_getOctetStringSize(value) != 8)
             {
-
                 retVal = DATA_ACCESS_ERROR_OBJECT_VALUE_INVALID;
 
                 goto exit_function;
@@ -2621,7 +2581,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
 
             if (checkForZeroEntryID(value) == false)
             {
-
                 if (!checkReportBufferForEntryID(rc, value))
                 {
                     rc->reportBuffer->isOverflow = true;
@@ -2655,7 +2614,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
 
         else if (strcmp(elementName, "BufTm") == 0)
         {
-
             if (!(self->iedServer->rcbSettingsWritable & IEC61850_REPORTSETTINGS_BUF_TIME))
             {
                 retVal = DATA_ACCESS_ERROR_OBJECT_ACCESS_DENIED;
@@ -2700,7 +2658,6 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
         }
         else if (strcmp(elementName, "RptID") == 0)
         {
-
             if (!(self->iedServer->rcbSettingsWritable & IEC61850_REPORTSETTINGS_RPT_ID))
             {
                 retVal = DATA_ACCESS_ERROR_OBJECT_ACCESS_DENIED;
@@ -2745,12 +2702,10 @@ Reporting_RCBWriteAccessHandler(MmsMapping* self, ReportControl* rc, const char*
         {
             if (rc->buffered)
             {
-
                 resvTmsAccess = true;
 
                 if (rc->resvTms != -1)
                 {
-
                     int resvTms = MmsValue_toInt32(value);
 
                     if (resvTms >= 0)
@@ -2894,7 +2849,6 @@ exit_function:
 
             if (rc->resvTms == 0)
             {
-
                 if (rc->reserved == false)
                 {
                     rc->resvTms = RESV_TMS_IMPLICIT_VALUE;
