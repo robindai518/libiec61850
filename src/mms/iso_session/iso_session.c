@@ -338,14 +338,32 @@ IsoSession_createConnectSpdu(IsoSession* self, IsoConnectionParameters isoParame
 {
     int offset = 0;
     uint8_t* buf = buffer->buffer;
-    int lengthOffset;
 
     buf[offset++] = 13; /* CONNECT SPDU */
-    lengthOffset = offset;
-    offset++; /* Skip byte for length - fill it later */
 
     self->calledSessionSelector = isoParameters->remoteSSelector;
     self->callingSessionSelector = isoParameters->localSSelector;
+
+    int calculatedLength = 8 /* connect-accept-item */
+                         + 4 /* session-requirements */
+                         + (2 + self->callingSessionSelector.size) /* calling-session-selector */
+                         + (2 + self->calledSessionSelector.size); /* called-session-selector */
+
+    if (payload->length > 254) {
+        calculatedLength += (4 + payload->length);
+    }
+    else {
+        calculatedLength += (2 + payload->length);
+    }
+
+    if (calculatedLength > 254) {
+        buf[offset++] = 0xff;
+        buf[offset++] = (calculatedLength / 0x100);
+        buf[offset++] = (calculatedLength % 0x100);
+    }
+    else {
+        buf[offset++] = (uint8_t) calculatedLength;
+    }
 
     offset = encodeConnectAcceptItem(buf, offset, 0);
 
@@ -356,10 +374,6 @@ IsoSession_createConnectSpdu(IsoSession* self, IsoConnectionParameters isoParame
     offset = encodeCalledSessionSelector(self, buf, offset);
 
     offset = encodeSessionUserData(buf, offset, payload->length);
-
-    int spduLength = (offset - lengthOffset - 1) + payload->length;
-
-    buf[lengthOffset] = spduLength;
 
     buffer->partLength = offset;
     buffer->length = offset + payload->length;
@@ -430,13 +444,30 @@ IsoSession_createAcceptSpdu(IsoSession* self, BufferChain buffer, BufferChain pa
 {
     int offset = 0;
     uint8_t* buf = buffer->buffer;
-    int lengthOffset;
 
     int payloadLength = payload->length;
 
     buf[offset++] = 14; /* ACCEPT SPDU */
-    lengthOffset = offset;
-    offset++;
+
+    int calculatedLength = 8 /* connect-accept-item */
+                        + 4 /* session-requirements */
+                        + (2 + self->calledSessionSelector.size); /* called-session-selector */
+
+    if (payload->length > 254) {
+        calculatedLength += (4 + payload->length);
+    }
+    else {
+        calculatedLength += (2 + payload->length);
+    }
+
+    if (calculatedLength > 254) {
+        buf[offset++] = 0xff;
+        buf[offset++] = (calculatedLength / 0x100);
+        buf[offset++] = (calculatedLength % 0x100);
+    }
+    else {
+        buf[offset++] = (uint8_t) calculatedLength;
+    }
 
     offset = encodeConnectAcceptItem(buf, offset, self->protocolOptions);
 
@@ -445,10 +476,6 @@ IsoSession_createAcceptSpdu(IsoSession* self, BufferChain buffer, BufferChain pa
     offset = encodeCalledSessionSelector(self, buf, offset);
 
     offset = encodeSessionUserData(buf, offset, payloadLength);
-
-    int spduLength = (offset - lengthOffset - 1) + payloadLength;
-
-    buf[lengthOffset] = spduLength;
 
     buffer->partLength = offset;
     buffer->length = offset + payloadLength;
@@ -460,10 +487,8 @@ IsoSession_createRefuseSpdu(IsoSession* self, BufferChain buffer, BufferChain pa
 {
     int offset = 0;
     uint8_t* buf = buffer->buffer;
-    int lengthOffset;
 
     buf[offset++] = 12; /* REFUSE SPDU */
-    lengthOffset = offset;
     offset++;
 
     offset = encodeConnectionIdentifier(buf, offset, reasonCode);
@@ -511,7 +536,10 @@ IsoSession_parseMessage(IsoSession* self, ByteBuffer* message)
         if (length != (message->size - 2))
             return SESSION_ERROR;
         if (parseSessionHeaderParameters(self, message, length) == SESSION_OK)
+        {
+            //TODO check called S-selector when configured
             return SESSION_CONNECT;
+        }
         else
         {
             if (DEBUG_SESSION)
