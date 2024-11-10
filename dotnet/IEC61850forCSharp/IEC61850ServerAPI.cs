@@ -2404,6 +2404,33 @@ namespace IEC61850
             [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
             static extern void IedServer_setTimeQuality(IntPtr self, [MarshalAs(UnmanagedType.I1)] bool leapSecondKnown, [MarshalAs(UnmanagedType.I1)] bool clockFailure, [MarshalAs(UnmanagedType.I1)] bool clockNotSynchronized, int subsecondPrecision);
 
+            [StructLayout(LayoutKind.Sequential)]
+            private struct NativeTSelector
+            {
+                public byte size;
+
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)] public byte[] value;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            private struct NativeSSelector
+            {
+                public byte size;
+
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)] public byte[] value;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            private struct NativePSelector
+            {
+                public byte size;
+
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)] public byte[] value;
+            }
+
+            [DllImport("iec61850", CallingConvention = CallingConvention.Cdecl)]
+            static extern void IedServer_setLocalAddresses(IntPtr self, IntPtr pSel, IntPtr sSel, IntPtr tSel);
+
             private IntPtr self = IntPtr.Zero;
 
             private InternalControlHandler internalControlHandlerRef = null;
@@ -2610,6 +2637,82 @@ namespace IEC61850
             public void SetLocalIpAddress(string localIpAddress)
             {
                 IedServer_setLocalIpAddress (self, localIpAddress);
+            }
+
+            /// <summary>
+            /// Set the called (local) addresses that should be checked by the server
+            /// </summary>
+            /// <param name="pSelector">P-selector (max. 16 bytes), or null when the P-selecter should not be checked</param>
+            /// <param name="sSelector">S-selector (max. 16 bytes), or null when the S-selecter should not be checked</param>
+            /// <param name="tSelector">T-selector (max. 4 bytes), or null when the T-selecter should not be checked</param>
+            /// <exception cref="ArgumentOutOfRangeException">when a selector is given that exceeds the maximum size</exception>
+            public void SetLocalAddresses(byte[] pSelector, byte[] sSelector, byte[] tSelector)
+            {
+                IntPtr nPSel = IntPtr.Zero;
+                IntPtr nSSel = IntPtr.Zero;
+                IntPtr nTSel = IntPtr.Zero;
+
+                if (pSelector != null)
+                {
+                    if (pSelector.Length > 16)
+                        throw new ArgumentOutOfRangeException("pSelector", "maximum size (16) exceeded");
+
+                    NativePSelector nativePSelector;
+                    nativePSelector.size = (byte)pSelector.Length;
+                    nativePSelector.value = new byte[16];
+
+                    for (int i = 0; i < pSelector.Length; i++)
+                        nativePSelector.value[i] = pSelector[i];
+
+                    nPSel = Marshal.AllocHGlobal(Marshal.SizeOf(nativePSelector));
+
+                    Marshal.StructureToPtr(nativePSelector, nPSel, false);
+                }
+
+                if (sSelector != null)
+                {
+                    if (sSelector.Length > 16)
+                        throw new ArgumentOutOfRangeException("sSelector", "maximum size (16) exceeded");
+
+                    NativeSSelector nativeSSelector;
+                    nativeSSelector.size = (byte)sSelector.Length;
+                    nativeSSelector.value = new byte[16];
+
+                    for (int i = 0; i < sSelector.Length; i++)
+                        nativeSSelector.value[i] = sSelector[i];
+
+                    nSSel = Marshal.AllocHGlobal(Marshal.SizeOf(nativeSSelector));
+
+                    Marshal.StructureToPtr(nativeSSelector, nSSel, false);
+                }
+
+                if (tSelector != null)
+                {
+                    if (tSelector.Length > 4)
+                        throw new ArgumentOutOfRangeException("tSelector", "maximum size (4) exceeded");
+
+                    NativeTSelector nativeTSelector;
+                    nativeTSelector.size = (byte)tSelector.Length;
+                    nativeTSelector.value = new byte[16];
+
+                    for (int i = 0; i < tSelector.Length; i++)
+                        nativeTSelector.value[i] = tSelector[i];
+
+                    nTSel = Marshal.AllocHGlobal(Marshal.SizeOf(nativeTSelector));
+
+                    Marshal.StructureToPtr(nativeTSelector, nTSel, false);
+                }
+
+                IedServer_setLocalAddresses(self, nPSel, nSSel, nTSel);
+
+                if (nPSel != IntPtr.Zero)
+                    Marshal.FreeHGlobal(nPSel);
+
+                if (nSSel != IntPtr.Zero)
+                    Marshal.FreeHGlobal(nSSel);
+
+                if (nTSel != IntPtr.Zero)
+                    Marshal.FreeHGlobal(nTSel);
             }
 
             /// <summary>
