@@ -1,7 +1,7 @@
 /*
  *  ise_session.h
  *
- *  Copyright 2013-2018 Michael Zillgith
+ *  Copyright 2013-2014 Michael Zillgith
  *
  *  This file is part of libIEC61850.
  *
@@ -31,6 +31,7 @@
 typedef struct {
 	SSelector callingSessionSelector;
 	SSelector calledSessionSelector;
+	const SSelector* checkCalledSSelector;
 	uint16_t sessionRequirement;
 	uint8_t protocolOptions;
 	ByteBuffer userData;
@@ -50,6 +51,9 @@ typedef enum {
 
 LIB61850_INTERNAL void
 IsoSession_init(IsoSession* session);
+
+LIB61850_INTERNAL void
+IsoSession_setCalledSSelector(IsoSession* session, const SSelector* calledSSelector);
 
 LIB61850_INTERNAL ByteBuffer*
 IsoSession_getUserData(IsoSession* session);

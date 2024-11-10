@@ -180,6 +180,28 @@ MmsServer_setLocalIpAddress(MmsServer self, const char* localIpAddress)
     }
 }
 
+void
+MmsServer_setLocalAddresses(MmsServer self, const PSelector* pSelector, const SSelector* sSelector, const TSelector* tSelector)
+{
+    if (pSelector)
+    {
+        self->pSel = *pSelector;
+        self->checkCalledPSel = true;
+    }
+
+    if (sSelector)
+    {
+        self->sSel = *sSelector;
+        self->checkCalledSSel = true;
+    }
+
+    if (tSelector)
+    {
+        self->tSel = *tSelector;
+        self->checkCalledTSel = true;
+    }
+}
+
 bool
 MmsServer_isRunning(MmsServer self)
 {
@@ -723,6 +745,8 @@ MmsServer_startListening(MmsServer self, int tcpPort)
             if (tcpPort != -1)
                 IsoServer_setTcpPort(isoServer, tcpPort);
 
+            IsoServer_setLocalAddresses(isoServer, &self->pSel, &self->sSel, &self->tSel);
+
             IsoServer_startListening(isoServer);
 
             elem = LinkedList_getNext(elem);
@@ -769,6 +793,10 @@ MmsServer_startListeningThreadless(MmsServer self, int tcpPort)
 
             if (tcpPort != -1)
                 IsoServer_setTcpPort(isoServer, tcpPort);
+
+            IsoServer_setLocalAddresses(isoServer, self->checkCalledPSel ? &self->pSel : NULL,
+                                                   self->checkCalledSSel ? &self->sSel : NULL,
+                                                   self->checkCalledTSel ? &self->tSel : NULL);
 
             IsoServer_startListeningThreadless(isoServer);
 

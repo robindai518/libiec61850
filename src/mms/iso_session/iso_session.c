@@ -507,12 +507,39 @@ IsoSession_init(IsoSession* session)
     session->calledSessionSelector.size = 2;
     session->calledSessionSelector.value[0] = 0;
     session->calledSessionSelector.value[1] = 1;
+
+    session->checkCalledSSelector = NULL;
+}
+
+void
+IsoSession_setCalledSSelector(IsoSession* session, const SSelector* calledSSelector)
+{
+    session->checkCalledSSelector = calledSSelector;
 }
 
 ByteBuffer*
 IsoSession_getUserData(IsoSession* session)
 {
     return &session->userData;
+}
+
+static bool
+checkCalledSSelector(IsoSession* self)
+{
+    if (self->checkCalledSSelector == NULL)
+        return true;
+
+    if (self->calledSessionSelector.size != self->checkCalledSSelector->size)
+        return false;
+
+    int i;
+    for (i = 0; i < self->calledSessionSelector.size; i++)
+    {
+        if (self->calledSessionSelector.value[i] != self->checkCalledSSelector->value[i])
+            return false;
+    }
+
+    return true;
 }
 
 IsoSessionIndication
@@ -537,8 +564,16 @@ IsoSession_parseMessage(IsoSession* self, ByteBuffer* message)
             return SESSION_ERROR;
         if (parseSessionHeaderParameters(self, message, length) == SESSION_OK)
         {
-            //TODO check called S-selector when configured
-            return SESSION_CONNECT;
+            if (checkCalledSSelector(self))
+            {
+                return SESSION_CONNECT;
+            }
+            else
+            {
+                if (DEBUG_SESSION)
+                    printf("SESSION: wrong called S-selector value\n");
+                return SESSION_ERROR;
+            }
         }
         else
         {

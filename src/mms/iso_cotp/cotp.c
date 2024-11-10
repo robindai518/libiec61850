@@ -579,6 +579,14 @@ CotpConnection_init(CotpConnection* self, Socket socket,
     self->socketExtensionBuffer = socketExtensionBuffer;
     self->socketExtensionBufferSize = socketExtensionBufferSize;
     self->socketExtensionBufferFill = 0;
+
+    self->checkTSel = NULL;
+}
+
+void
+CotpConnection_setCheckDstSelector(CotpConnection* self, const TSelector* tSel)
+{
+    self->checkTSel = tSel;
 }
 
 int /* in byte */
@@ -632,6 +640,24 @@ CotpConnection_getLocalRef(CotpConnection* self)
  +--+------+---------+---------+---+---+------+-------+---------+
  */
 
+static bool
+checkDstTSelector(CotpConnection* self)
+{
+    if (self->checkTSel == NULL)
+        return true;
+
+    if (self->options.tSelDst.size != self->checkTSel->size)
+        return false;
+
+    int i;
+    for (i = 0; i < self->options.tSelDst.size; i++)
+    {
+        if (self->options.tSelDst.value[i] != self->checkTSel->value[i])
+            return false;
+    }
+
+    return true;
+}
 
 static bool
 parseConnectRequestTpdu(CotpConnection* self, uint8_t* buffer, uint8_t len)
@@ -642,7 +668,25 @@ parseConnectRequestTpdu(CotpConnection* self, uint8_t* buffer, uint8_t len)
     self->remoteRef = getUint16(buffer + 2);
     self->protocolClass = getUint8(buffer + 4);
 
-    return parseOptions(self, buffer + 5, len - 6);
+    if (parseOptions(self, buffer + 5, len - 6))
+    {
+        if (checkDstTSelector(self) == false)
+        {
+            if (DEBUG_COTP)
+                printf("COTP: CR TPDU: wrong called T-selector value\n");
+
+            return false;
+        }
+    }
+    else
+    {
+        if (DEBUG_COTP)
+            printf("COTP: CR TPDU: error parsing options\n");
+
+        return false;
+    }
+
+    return true;
 }
 
 static bool

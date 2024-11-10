@@ -54,6 +54,9 @@ typedef enum {
 LIB61850_INTERNAL void
 MmsServer_setLocalIpAddress(MmsServer self, const char* localIpAddress);
 
+LIB61850_INTERNAL void
+MmsServer_setLocalAddresses(MmsServer self, const PSelector* pSelector, const SSelector* sSelector, const TSelector* tSelector);
+
 LIB61850_INTERNAL bool
 MmsServer_isRunning(MmsServer self);
 
@@ -284,10 +287,6 @@ MmsServer_setMaxDataSetEntries(MmsServer self, int maxDataSetEntries);
  */
 LIB61850_INTERNAL void
 MmsServer_enableJournalService(MmsServer self, bool enable);
-
-
-
-
 
 /***************************************************
  * Functions for MMS identify service

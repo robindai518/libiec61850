@@ -105,8 +105,8 @@ struct sMmsObtainFileTask {
 
 #endif /* (MMS_OBTAIN_FILE_SERVICE == 1) */
 
-struct sMmsServer {
-
+struct sMmsServer
+{
     LinkedList /*<IsoServer>*/ isoServerList;
 
     MmsDevice* device;
@@ -198,6 +198,12 @@ struct sMmsServer {
     int maxDomainSpecificDataSets;
 #endif /* (CONFIG_SET_FILESTORE_BASEPATH_AT_RUNTIME == 1) */
 
+    PSelector pSel;
+    bool checkCalledPSel;
+    SSelector sSel;
+    bool checkCalledSSel;
+    TSelector tSel;
+    bool checkCalledTSel;
 };
 
 struct sMmsServerConnection {
@@ -244,8 +250,6 @@ MmsServer_callConnectionHandler(MmsServer self, MmsServerConnection connection);
 /* write_out function required for ASN.1 encoding */
 LIB61850_INTERNAL int
 mmsServer_write_out(const void *buffer, size_t size, void *app_key);
-
-
 
 LIB61850_INTERNAL void
 mmsServer_handleDeleteNamedVariableListRequest(MmsServerConnection connection,

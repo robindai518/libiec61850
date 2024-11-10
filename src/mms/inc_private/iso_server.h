@@ -113,6 +113,10 @@ IsoServer_setMaxConnections(IsoServer self, int maxConnections);
 LIB61850_INTERNAL void
 IsoServer_setLocalIpAddress(IsoServer self, const char* ipAddress);
 
+LIB61850_INTERNAL void
+IsoServer_setLocalAddresses(IsoServer self, const PSelector* pSel, const SSelector* sSel,
+        const TSelector* tSel);
+
 LIB61850_INTERNAL IsoServerState
 IsoServer_getState(IsoServer self);
 

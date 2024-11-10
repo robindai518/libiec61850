@@ -59,6 +59,8 @@ typedef struct {
     uint8_t* socketExtensionBuffer; /* buffer to store data when TCP socket is not accepting all data */
     int socketExtensionBufferSize; /* maximum number of bytes to store in the extension buffer */
     int socketExtensionBufferFill; /* number of bytes in the extension buffer (bytes to write) */
+
+    const TSelector* checkTSel; /* when set the called TSelector will be check to be equal to this value */
 } CotpConnection;
 
 typedef enum {
@@ -86,6 +88,9 @@ LIB61850_INTERNAL void
 CotpConnection_init(CotpConnection* self, Socket socket,
         ByteBuffer* payloadBuffer, ByteBuffer* readBuffer, ByteBuffer* writeBuffer,
         uint8_t* socketExtensionBuffer, int socketExtensionBufferSize);
+
+LIB61850_INTERNAL void
+CotpConnection_setCheckDstSelector(CotpConnection* self, const TSelector* tSel);
 
 LIB61850_INTERNAL CotpIndication
 CotpConnection_parseIncomingMessage(CotpConnection* self);

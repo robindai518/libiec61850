@@ -31,6 +31,7 @@
 typedef struct {
 	PSelector callingPresentationSelector;
 	PSelector calledPresentationSelector;
+	const PSelector* checkCalledPSelector;
 	uint8_t nextContextId;
 	uint8_t acseContextId;
 	uint8_t mmsContextId;
@@ -38,13 +39,16 @@ typedef struct {
 } IsoPresentation;
 
 LIB61850_INTERNAL void
-IsoPresentation_init(IsoPresentation* session);
+IsoPresentation_init(IsoPresentation* self);
+
+LIB61850_INTERNAL void
+IsoPresentation_setCalledPSelector(IsoPresentation* self, const PSelector* calledPSelector);
 
 LIB61850_INTERNAL int
-IsoPresentation_parseUserData(IsoPresentation* session, ByteBuffer* message);
+IsoPresentation_parseUserData(IsoPresentation* self, ByteBuffer* message);
 
-LIB61850_INTERNAL int
-IsoPresentation_parseConnect(IsoPresentation* session, ByteBuffer* message);
+LIB61850_INTERNAL bool
+IsoPresentation_parseConnect(IsoPresentation* self, ByteBuffer* message);
 
 LIB61850_INTERNAL void
 IsoPresentation_createConnectPdu(IsoPresentation* self, IsoConnectionParameters parameters,

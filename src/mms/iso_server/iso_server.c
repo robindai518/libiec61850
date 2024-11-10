@@ -90,6 +90,10 @@ struct sIsoServer {
 #endif
 
     int connectionCounter;
+
+    const PSelector* localPSel;
+    const SSelector* localSSel;
+    const TSelector* localTSel;
 };
 
 static void
@@ -421,7 +425,8 @@ setupIsoServer(IsoServer self)
 
     self->serverSocket = (Socket) TcpServerSocket_create(self->localIpAddress, self->tcpPort);
 
-    if (self->serverSocket == NULL) {
+    if (self->serverSocket == NULL)
+    {
         setState(self, ISO_SVR_STATE_ERROR);
         success = false;
 
@@ -462,7 +467,8 @@ exit_function:
 static void
 handleIsoConnections(IsoServer self, bool isSingleThread)
 {
-    if (isSingleThread) {
+    if (isSingleThread)
+    {
         /*
          * NOTE: when running in multi thread mode the tick handler is called
          * by the connection thread.
@@ -475,11 +481,13 @@ handleIsoConnections(IsoServer self, bool isSingleThread)
 
     Socket connectionSocket;
 
-    if ((connectionSocket = ServerSocket_accept((ServerSocket) self->serverSocket)) != NULL) {
-
+    if ((connectionSocket = ServerSocket_accept((ServerSocket) self->serverSocket)) != NULL)
+    {
 #if (CONFIG_MMS_SERVER_CONFIG_SERVICES_AT_RUNTIME == 1)
-        if (self->maxConnections > -1) {
-            if (private_IsoServer_getConnectionCounter(self) >= self->maxConnections) {
+        if (self->maxConnections > -1)
+        {
+            if (private_IsoServer_getConnectionCounter(self) >= self->maxConnections)
+            {
                 if (DEBUG_ISO_SERVER)
                     printf("ISO_SERVER: maximum number of connections reached -> reject connection attempt.\n");
 
@@ -491,7 +499,8 @@ handleIsoConnections(IsoServer self, bool isSingleThread)
 #endif /* (CONFIG_MMS_SERVER_CONFIG_SERVICES_AT_RUNTIME == 1) */
 
 #if (CONFIG_MAXIMUM_TCP_CLIENT_CONNECTIONS != -1)
-        if (private_IsoServer_getConnectionCounter(self) >= CONFIG_MAXIMUM_TCP_CLIENT_CONNECTIONS) {
+        if (private_IsoServer_getConnectionCounter(self) >= CONFIG_MAXIMUM_TCP_CLIENT_CONNECTIONS)
+        {
             if (DEBUG_ISO_SERVER)
                 printf("ISO_SERVER: maximum number of connections reached -> reject connection attempt.\n");
 
@@ -506,7 +515,8 @@ handleIsoConnections(IsoServer self, bool isSingleThread)
 
         IsoConnection isoConnection = IsoConnection_create(connectionSocket, self, isSingleThread);
 
-        if (isoConnection) {
+        if (isoConnection)
+        {
             addClientConnection(self, isoConnection);
 
             if (isSingleThread)
@@ -518,7 +528,8 @@ handleIsoConnections(IsoServer self, bool isSingleThread)
             if (isSingleThread == false)
                 IsoConnection_start(isoConnection);
         }
-        else {
+        else
+        {
             Socket_destroy(connectionSocket);
         }
     }
@@ -534,7 +545,8 @@ isoServerThread(void* isoServerParam)
 {
     IsoServer self = (IsoServer) isoServerParam;
 
-    if (!setupIsoServer(self)) {
+    if (!setupIsoServer(self))
+    {
         if (DEBUG_ISO_SERVER)
             printf("ISO_SERVER: starting server failed!\n");
 
@@ -569,7 +581,8 @@ IsoServer_create(TLSConfiguration tlsConfiguration)
 {
     IsoServer self = (IsoServer) GLOBAL_CALLOC(1, sizeof(struct sIsoServer));
 
-    if (self) {
+    if (self)
+    {
         self->state = ISO_SVR_STATE_IDLE;
 
         if (tlsConfiguration == NULL)
@@ -597,6 +610,10 @@ IsoServer_create(TLSConfiguration tlsConfiguration)
 #endif /* (CONFIG_MMS_THREADLESS_STACK != 1) */
 
         self->connectionCounter = 0;
+
+        self->localPSel = NULL;
+        self->localSSel = NULL;
+        self->localTSel = NULL;
     }
 
     return self;
@@ -625,6 +642,15 @@ IsoServer_setLocalIpAddress(IsoServer self, const char* ipAddress)
         self->localIpAddress = StringUtils_copyString(ipAddress);
     else
         self->localIpAddress = NULL;
+}
+
+void
+IsoServer_setLocalAddresses(IsoServer self, const PSelector* pSel, const SSelector* sSel,
+        const TSelector* tSel)
+{
+    self->localPSel = pSel;
+    self->localSSel = sSel;
+    self->localTSel = tSel;
 }
 
 IsoServerState
@@ -662,7 +688,8 @@ IsoServer_getTLSConfiguration(IsoServer self)
 void
 IsoServer_startListening(IsoServer self)
 {
-    if (self->state == ISO_SVR_STATE_RUNNING) {
+    if (self->state == ISO_SVR_STATE_RUNNING)
+    {
         if (DEBUG_ISO_SERVER)
                 printf("ISO_SERVER: server already in RUNNING state!\n");
 
@@ -695,13 +722,15 @@ exit_function:
 void
 IsoServer_startListeningThreadless(IsoServer self)
 {
-    if (!setupIsoServer(self)) {
+    if (!setupIsoServer(self))
+    {
         if (DEBUG_ISO_SERVER)
             printf("ISO_SERVER: starting server failed!\n");
 
         self->serverSocket = NULL;
     }
-    else {
+    else
+    {
         setState(self, ISO_SVR_STATE_RUNNING);
 
         if (DEBUG_ISO_SERVER)
@@ -712,21 +741,22 @@ IsoServer_startListeningThreadless(IsoServer self)
 int
 IsoServer_waitReady(IsoServer self, unsigned int timeoutMs)
 {
-   int result = -1;
+    int result = -1;
 
-   if (getState(self) == ISO_SVR_STATE_RUNNING) {
+    if (getState(self) == ISO_SVR_STATE_RUNNING)
+    {
+        if (self->handleset)
+        {
+            result = Handleset_waitReady(self->handleset, timeoutMs);
+        }
+        else
+        {
+            if (DEBUG_ISO_SERVER)
+                printf("ISO_SERVER: internal error - no handleset!\n");
+        }
+    }
 
-       if (self->handleset) {
-           result = Handleset_waitReady(self->handleset, timeoutMs);
-       }
-       else {
-           if (DEBUG_ISO_SERVER)
-               printf("ISO_SERVER: internal error - no handleset!\n");
-       }
-
-   }
-
-   return result;
+    return result;
 }
 
 void
@@ -747,7 +777,8 @@ stopListening(IsoServer self)
 {
     setState(self, ISO_SVR_STATE_STOPPED);
 
-    if (self->serverSocket != NULL) {
+    if (self->serverSocket)
+    {
         ServerSocket_destroy((ServerSocket) self->serverSocket);
         self->serverSocket = NULL;
     }
@@ -760,7 +791,8 @@ IsoServer_stopListeningThreadless(IsoServer self)
 
     closeAllOpenClientConnections(self);
 
-    if (self->handleset) {
+    if (self->handleset)
+    {
         Handleset_destroy(self->handleset);
         self->handleset = NULL;
     }
@@ -778,8 +810,9 @@ IsoServer_stopListening(IsoServer self)
     if (self->serverThread != NULL)
         Thread_destroy(self->serverThread);
 
-    if (self->serverSocket != NULL) {
-        ServerSocket_destroy((ServerSocket) self->serverSocket);
+    if (self->serverSocket != NULL)
+    {
+        ServerSocket_destroy((ServerSocket)self->serverSocket);
         self->serverSocket = NULL;
     }
 
@@ -789,7 +822,8 @@ IsoServer_stopListening(IsoServer self)
     while (private_IsoServer_getConnectionCounter(self) > 0)
         Thread_sleep(10);
 
-    if (self->handleset) {
+    if (self->handleset)
+    {
         Handleset_destroy(self->handleset);
         self->handleset = NULL;
     }
@@ -819,8 +853,8 @@ IsoServer_setConnectionHandler(IsoServer self, ConnectionIndicationHandler handl
 void
 IsoServer_destroy(IsoServer self)
 {
-    if (self) {
-
+    if (self)
+    {
 #if (CONFIG_MMS_THREADLESS_STACK != 1)
         if (self->state == ISO_SVR_STATE_RUNNING)
             IsoServer_stopListening(self);
@@ -895,3 +929,20 @@ private_IsoServer_getConnectionCounter(IsoServer self)
     return connectionCounter;
 }
 
+const PSelector*
+private_IsoServer_getLocalPSelector(IsoServer self)
+{
+    return self->localPSel;
+}
+
+const SSelector*
+private_IsoServer_getLocalSSelector(IsoServer self)
+{
+    return self->localSSel;
+}
+
+const TSelector*
+private_IsoServer_getLocalTSelector(IsoServer self)
+{
+    return self->localTSel;
+}

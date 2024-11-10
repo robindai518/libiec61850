@@ -70,6 +70,15 @@ private_IsoServer_decreaseConnectionCounter(IsoServer self);
 LIB61850_INTERNAL int
 private_IsoServer_getConnectionCounter(IsoServer self);
 
+LIB61850_INTERNAL const PSelector*
+private_IsoServer_getLocalPSelector(IsoServer self);
+
+LIB61850_INTERNAL const SSelector*
+private_IsoServer_getLocalSSelector(IsoServer self);
+
+LIB61850_INTERNAL const TSelector*
+private_IsoServer_getLocalTSelector(IsoServer self);
+
 LIB61850_INTERNAL bool
 IsoConnection_isRunning(IsoConnection self);
 

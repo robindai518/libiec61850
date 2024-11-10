@@ -515,6 +515,21 @@ LIB61850_API void
 IedServer_setLocalIpAddress(IedServer self, const char* localIpAddress);
 
 /**
+ * \brief Set the local addresses
+ *
+ * \note When set, the values will be checked againt the called addresses of the incoming connections.
+ *       If the set addresses do not match the incoming connection will be rejected.
+ *       Default behavior is to accept all incoming connections independent of the called selectors.
+ *
+ * \param self the IedServer instance
+ * \param pSelector the presentation-selector to set or NULL when no check is required
+ * \param sSelector the session-selector to set or NULL when no check is required
+ * \param tSelector the transport-selector to set or NULL when no check is required
+ */
+LIB61850_API void
+IedServer_setLocalAddresses(IedServer self, const PSelector* pSelector, const SSelector* sSelector, const TSelector* tSelector);
+
+/**
  * \brief Set the identify for the MMS identify service
  *
  * CONFIG_IEC61850_SUPPORT_SERVER_IDENTITY required

@@ -923,6 +923,11 @@ IedServer_setLocalIpAddress(IedServer self, const char* localIpAddress)
     MmsServer_setLocalIpAddress(self->mmsServer, self->localIpAddress);
 }
 
+void
+IedServer_setLocalAddresses(IedServer self, const PSelector* pSelector, const SSelector* sSelector, const TSelector* tSelector)
+{
+    MmsServer_setLocalAddresses(self->mmsServer, pSelector, sSelector, tSelector);
+}
 
 void
 IedServer_startThreadless(IedServer self, int tcpPort)
