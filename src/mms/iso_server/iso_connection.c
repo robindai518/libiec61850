@@ -636,3 +636,11 @@ IsoConnection_isRunning(IsoConnection self)
     else
         return false;
 }
+
+int
+IsoConnection_socketDescriptor(IsoConnection self)
+{
+    if (self)
+        return Socket_socketDescriptor(self->socket);
+    return -1;
+}

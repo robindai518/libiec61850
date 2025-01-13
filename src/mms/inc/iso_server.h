@@ -144,6 +144,9 @@ IsoServer_closeConnection(IsoServer self, IsoConnection isoConnection);
 void
 IsoServer_destroy(IsoServer self);
 
+int
+IsoConnection_socketDescriptor(IsoConnection self);
+
 #ifdef __cplusplus
 }
 #endif
