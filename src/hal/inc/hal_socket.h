@@ -251,6 +251,9 @@ Socket_getPeerAddress(Socket self);
 void
 Socket_destroy(Socket self);
 
+int
+Socket_socketDescriptor(Socket self);
+
 /*! @} */
 
 /*! @} */

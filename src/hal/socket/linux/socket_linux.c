@@ -439,3 +439,11 @@ Socket_destroy(Socket self)
 
     GLOBAL_FREEMEM(self);
 }
+
+int
+Socket_socketDescriptor(Socket self)
+{
+    if (self)
+        return self->fd;
+    return -1;
+}
