@@ -391,6 +391,8 @@ handleIsoConnections(IsoServer self)
             self->connectionHandler(ISO_CONNECTION_OPENED, self->connectionHandlerParameter,
                     isoConnection);
 
+            IsoConnection_start(isoConnection);
+
         }
 
     }
@@ -644,7 +646,7 @@ IsoServer_waitReady(IsoServer self, unsigned int timeoutMs)
 #if ((CONFIG_MMS_SINGLE_THREADED == 1) || (CONFIG_MMS_THREADLESS_STACK == 1))
                        IsoConnection_destroy(self->openClientConnections[i]);
 #endif
-                       self->openClientConnections[i] = NULL;
+                       //self->openClientConnections[i] = NULL;
                    }
                }
            }
